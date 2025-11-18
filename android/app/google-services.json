@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "17313293524",
+    "project_id": "geohunt-01",
+    "storage_bucket": "geohunt-01.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:17313293524:android:0f9f09a26122dc3852c741",
+        "android_client_info": {
+          "package_name": "com.example.geohunt"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyD_eXzWiFI55gUw8gYH-puyFSwWVhDCWjg"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
