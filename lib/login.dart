@@ -2,8 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'registro.dart';
-import 'pagina.dart'; // Asegúrate de tener este archivo con la clase WelcomeScreen
-import 'user.dart'; // CORREGIDO: Importa el archivo correcto (plural)
+import 'pagina.dart';
+import 'user.dart'; // El modelo de usuario
+import 'registro_google.dart'; // NUEVO: Importamos el botón de Google que creamos
 
 class Login extends StatefulWidget {
   const Login({super.key});
@@ -63,14 +64,12 @@ class _LoginState extends State<Login> {
       String username = 'Explorador';
 
       if (docSnapshot.exists && docSnapshot.data() != null) {
-        // Aquí usamos UserModel del archivo users.dart
         username = UserModel.fromMap(docSnapshot.data()!, docSnapshot.id).username;
       }
 
       if (mounted) {
         Navigator.of(context).pushReplacement(
           MaterialPageRoute(
-            // Asegúrate de que WelcomeScreen esté definida en pagina.dart
             builder: (context) => WelcomeScreen(username: username),
           ),
         );
@@ -159,7 +158,7 @@ class _LoginState extends State<Login> {
               ),
               const SizedBox(height: 30),
 
-              // Opción 1: Botón de Iniciar Sesión
+              // Botón de Iniciar Sesión (Correo y Contraseña)
               ElevatedButton(
                 onPressed: _performLogin,
                 style: ElevatedButton.styleFrom(
@@ -179,9 +178,17 @@ class _LoginState extends State<Login> {
                   ),
                 ),
               ),
+
               const SizedBox(height: 20),
 
-              // Opción 2: Botón de Registrarse (navegación)
+              // --- NUEVO: Botón de Google (Para Admins) ---
+              // Asegúrate de tener el archivo google.dart creado
+              const GoogleLoginButton(),
+              // --------------------------------------------
+
+              const SizedBox(height: 20),
+
+              // Link a Registrarse
               TextButton(
                 onPressed: _navigateToRegister,
                 style: TextButton.styleFrom(
