@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_core/firebase_core.dart';
+import 'package:geohunt/notificaciones.dart';
 import 'firebase_options.dart'; // Asegúrate de que este archivo exista (generado por FlutterFire)
 import 'login.dart';
 
@@ -7,7 +8,7 @@ import 'login.dart';
 void main() async {
   // 2. Aseguramos que los widgets estén listos antes de iniciar Firebase
   WidgetsFlutterBinding.ensureInitialized();
-
+await iniciarNotificaciones();
   // 3. Inicializamos Firebase usando las opciones de tu plataforma
   await Firebase.initializeApp(
     options: DefaultFirebaseOptions.currentPlatform,

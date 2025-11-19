@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:geohunt/notificaciones.dart';
 
 class WelcomeScreen extends StatefulWidget {
   final String username;
@@ -14,6 +15,11 @@ class _WelcomeScreenState extends State<WelcomeScreen> {
   static const Color backgroundColor = Color(0xFF97AAA6);
   static const Color accentColor = Color(0xFF8CB9AC);
   static const Color secondaryColor = Color(0xFF8992D7);
+
+@override
+void initState()  {
+  super.initState();
+}
 
   @override
   Widget build(BuildContext context) {
@@ -57,7 +63,7 @@ class _WelcomeScreenState extends State<WelcomeScreen> {
                   color: Color.fromARGB(255, 60, 80, 75),
                 ),
               ),
-              const SizedBox(height: 50),
+              const SizedBox(height: 20),
               ElevatedButton.icon(
                 onPressed: () {
                   print('Navegando al inicio de la aplicación...');
@@ -80,6 +86,56 @@ class _WelcomeScreenState extends State<WelcomeScreen> {
                   elevation: 5,
                 ),
               ),
+
+              SizedBox(height: 8),
+                  Row(
+                    spacing: 6,
+                    children: [
+                      IconButton(
+                        onPressed: () async {
+                         await mostrarNotificacion('GeoHunt', '¡Bienvenido a GeoHunt!', 'logo');
+                        },
+                        icon: Icon(Icons.looks_one_rounded),
+                        style: IconButton.styleFrom(
+                          backgroundColor: secondaryColor,
+                          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(15),
+                          ),
+                          elevation: 5,
+                        ),
+                      ),
+                      IconButton(
+                        onPressed: () async {
+                          await mostrarNotificacion('Aviso', '¡Has encontrado un tesoro! ¡+30 puntos!', "tesoro");
+                        },
+                        icon: Icon(Icons.looks_two_rounded),
+                        style: IconButton.styleFrom(
+                          backgroundColor: secondaryColor,
+                          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(15),
+                          ),
+                          elevation: 5,
+                        ),
+                      ),
+
+                      IconButton(
+                        onPressed: () async {
+                          await mostrarNotificacion('Aviso', 'Hay problemas con el servidor. Pruebe más tarde.', "aviso");
+                        },
+                        icon: Icon(Icons.looks_3_rounded),
+                        style: IconButton.styleFrom(
+                          backgroundColor: secondaryColor,
+                          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(15),
+                          ),
+                          elevation: 5,
+                        ),
+                      ),
+                    ],
+                  )
             ],
           ),
         ),
