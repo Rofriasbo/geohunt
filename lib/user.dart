@@ -6,6 +6,7 @@ class UserModel {
   final String username;
   final int score;
   final List<String>? foundTreasures;
+  final String role; // Nuevo campo para el rol
 
   UserModel({
     required this.uid,
@@ -13,13 +14,13 @@ class UserModel {
     required this.username,
     this.score = 0,
     this.foundTreasures,
+    this.role = 'user', // Por defecto
   });
 
   factory UserModel.fromMap(Map<String, dynamic> data, String documentId) {
     final List<dynamic>? treasuresList = data['foundTreasures'];
 
     return UserModel(
-      // CORRECCIÓN: Usamos documentId (doc.id) como el UID del usuario
       uid: documentId,
       email: data['email'] ?? '',
       username: data['username'] ?? 'Explorador',
@@ -27,17 +28,17 @@ class UserModel {
       foundTreasures: treasuresList != null
           ? List<String>.from(treasuresList)
           : null,
+      role: data['role'] ?? 'user',
     );
   }
 
-  // Método para convertir el objeto UserModel a un mapa para Firestore
   Map<String, dynamic> toJson() {
     return {
-      // El UID no se incluye aquí porque se usa como ID del documento
       'email': email,
       'username': username,
       'score': score,
       'foundTreasures': foundTreasures ?? [],
+      'role': role,
     };
   }
 }

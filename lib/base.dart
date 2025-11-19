@@ -21,7 +21,6 @@ class DatabaseService {
     try {
       final doc = await _db.collection(_userCollection).doc(uid).get();
       if (doc.exists && doc.data() != null) {
-        // ERROR SOLUCIONADO: Se asegura el punto y coma y la sintaxis correcta.
         return UserModel.fromMap(doc.data()!, doc.id);
       }
       return null;
@@ -136,7 +135,7 @@ class DatabaseService {
     final userRef = _db.collection(_userCollection).doc(userUid);
 
     await userRef.update({
-      'foundTreasures': FieldValue.arrayUnion([treasureId]),
+      'foundTr easures': FieldValue.arrayUnion([treasureId]),
     });
   }
 
