@@ -4,12 +4,12 @@ class TreasureModel {
   final String id;
   final String title;
   final String description;
-  final GeoPoint location; // Tipo de dato especial de Firestore para coordenadas
-  final String difficulty; // Ej. 'Fácil', 'Medio', 'Difícil'
+  final GeoPoint location; // Coordenadas de Firestore
+  final String difficulty;
   final String creatorUid;
-  final bool isLimitedTime; // Para los tesoros con tiempo limitado
-  final Timestamp? creationDate; // Fecha de creación
-  final Timestamp? expiryDate; // Para tesoros de tiempo limitado
+  final bool isLimitedTime;
+  final Timestamp? creationDate;
+  final Timestamp? expiryDate;
 
   TreasureModel({
     required this.id,
@@ -23,12 +23,12 @@ class TreasureModel {
     this.expiryDate,
   });
 
-  // Constructor correcto para aceptar dos argumentos (data y documentId)
   factory TreasureModel.fromMap(Map<String, dynamic> data, String documentId) {
     return TreasureModel(
       id: documentId,
       title: data['title'] ?? 'Tesoro sin título',
       description: data['description'] ?? 'Sin descripción',
+      // Aseguramos que se lea como GeoPoint
       location: data['location'] as GeoPoint,
       difficulty: data['difficulty'] ?? 'Medio',
       creatorUid: data['creatorUid'] ?? '',

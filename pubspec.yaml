@@ -42,6 +42,7 @@ dependencies:
   google_sign_in: ^6.1.6
   flutter_map: ^6.1.0      # Para mostrar el mapa
   latlong2: ^0.9.0         # Para manejar coordenadas
+  geolocator: ^10.1.0
 
 dev_dependencies:
   flutter_test:
