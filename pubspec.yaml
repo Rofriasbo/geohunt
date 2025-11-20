@@ -40,6 +40,8 @@ dependencies:
   cloud_firestore: ^5.0.2
   firebase_messaging: ^15.0.2
   google_sign_in: ^6.1.6
+  flutter_map: ^6.1.0      # Para mostrar el mapa
+  latlong2: ^0.9.0         # Para manejar coordenadas
 
 dev_dependencies:
   flutter_test:

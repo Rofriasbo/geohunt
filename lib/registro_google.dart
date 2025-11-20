@@ -2,8 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'user.dart'; // Tu modelo de usuario
-import 'pagina.dart'; // Tu pantalla de bienvenida
+import 'user.dart';
+import 'pagina.dart';
+import 'admin.dart'; // IMPORTANTE: Importamos la pantalla de Admin
 
 class GoogleLoginButton extends StatefulWidget {
   const GoogleLoginButton({super.key});
@@ -20,111 +21,85 @@ class _GoogleLoginButtonState extends State<GoogleLoginButton> {
   bool _isSigningIn = false;
 
   Future<void> _signInWithGoogle() async {
-    setState(() {
-      _isSigningIn = true;
-    });
+    setState(() { _isSigningIn = true; });
 
     try {
-      // 1. Iniciar el flujo de autenticación de Google
+      // 1. Forzar cierre de sesión previo para elegir cuenta
+      await _googleSignIn.signOut();
+
       final GoogleSignInAccount? googleUser = await _googleSignIn.signIn();
 
-      // Si el usuario cancela el login
       if (googleUser == null) {
-        setState(() {
-          _isSigningIn = false;
-        });
+        setState(() { _isSigningIn = false; });
         return;
       }
 
-      // 2. Obtener los detalles de autenticación de la solicitud
       final GoogleSignInAuthentication googleAuth = await googleUser.authentication;
-
-      // 3. Crear una nueva credencial para Firebase
       final AuthCredential credential = GoogleAuthProvider.credential(
         accessToken: googleAuth.accessToken,
         idToken: googleAuth.idToken,
       );
 
-      // 4. Iniciar sesión en Firebase con la credencial
       final UserCredential userCredential = await _auth.signInWithCredential(credential);
       final User? user = userCredential.user;
 
       if (user != null) {
-        // 5. Verificar si el usuario ya existe en Firestore
         final DocumentSnapshot userDoc = await _firestore.collection('users').doc(user.uid).get();
 
-        String username = user.displayName ?? 'Admin Google';
+        UserModel userModel;
 
         if (!userDoc.exists) {
-          // --- LÓGICA DE REGISTRO DE ADMIN ---
-          // Si es la primera vez que entra con Google, lo creamos como ADMIN
-
-          UserModel newAdmin = UserModel(
+          // CASO: NUEVO USUARIO -> Se crea como ADMIN por defecto (según tu lógica)
+          userModel = UserModel(
             uid: user.uid,
-            email: user.email ?? '',
-            username: username,
-            role: 'admin', // <--- AQUÍ SE ASIGNA EL ROL DE ADMIN
+            email: user.email ?? '', // CORRECCIÓN: Manejo de nulos
+            username: user.displayName ?? 'Admin Google',
+            role: 'admin',
             score: 0,
             foundTreasures: [],
           );
-
-          await _firestore.collection('users').doc(user.uid).set(newAdmin.toJson());
+          await _firestore.collection('users').doc(user.uid).set(userModel.toJson());
         } else {
-          // Si ya existe, recuperamos su nombre actual
-          username = UserModel.fromMap(userDoc.data() as Map<String, dynamic>, user.uid).username;
+          // CASO: YA EXISTE -> Cargamos sus datos
+          userModel = UserModel.fromMap(userDoc.data() as Map<String, dynamic>, user.uid);
         }
 
-        // 6. Navegar a la pantalla principal
         if (mounted) {
-          Navigator.of(context).pushReplacement(
-            MaterialPageRoute(
-              builder: (context) => WelcomeScreen(username: username),
-            ),
-          );
+          // --- LÓGICA DE REDIRECCIÓN ---
+          if (userModel.role == 'admin') {
+            // SI ES ADMIN -> PANTALLA DE ADMIN
+            Navigator.of(context).pushReplacement(
+              MaterialPageRoute(builder: (context) => AdminScreen(user: userModel)),
+            );
+          } else {
+            // SI ES USER NORMAL -> PANTALLA DE BIENVENIDA
+            Navigator.of(context).pushReplacement(
+              MaterialPageRoute(builder: (context) => WelcomeScreen(username: userModel.username)),
+            );
+          }
         }
       }
-    } on FirebaseAuthException catch (e) {
-      _showSnackBar('Error de Firebase: ${e.message}');
     } catch (e) {
-      _showSnackBar('Error al iniciar sesión con Google: $e');
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Error: $e')));
     } finally {
-      if (mounted) {
-        setState(() {
-          _isSigningIn = false;
-        });
-      }
+      if (mounted) { setState(() { _isSigningIn = false; }); }
     }
-  }
-
-  void _showSnackBar(String message) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text(message)),
-    );
   }
 
   @override
   Widget build(BuildContext context) {
     return SizedBox(
-      width: double.infinity, // Ocupar todo el ancho disponible
+      width: double.infinity,
       child: ElevatedButton.icon(
         onPressed: _isSigningIn ? null : _signInWithGoogle,
         icon: _isSigningIn
-            ? const SizedBox(width: 20, height: 20, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.black54))
-            : const Icon(Icons.g_mobiledata, color: Colors.black87, size: 30), // Icono simple o usa una imagen de Google
-        label: Text(
-          _isSigningIn ? 'Cargando...' : 'Continuar con Google (Admin)',
-          style: const TextStyle(
-            color: Colors.black87,
-            fontWeight: FontWeight.bold,
-          ),
-        ),
+            ? const SizedBox(width: 20, height: 20, child: CircularProgressIndicator(strokeWidth: 2))
+            : const Icon(Icons.g_mobiledata, color: Colors.black87, size: 30),
+        label: Text(_isSigningIn ? 'Cargando...' : 'Continuar con Google (Admin)'),
         style: ElevatedButton.styleFrom(
           backgroundColor: Colors.white,
           padding: const EdgeInsets.symmetric(vertical: 12),
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(12),
-          ),
-          elevation: 4,
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
         ),
       ),
     );

@@ -14,6 +14,14 @@
       },
       "oauth_client": [
         {
+          "client_id": "17313293524-l1f80h5ua4ad8ntl7mebjgu7k2hba5iv.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.example.geohunt",
+            "certificate_hash": "13bbd5d69fde29979363b9609609638ef2c93dbb"
+          }
+        },
+        {
           "client_id": "17313293524-p05p5cf1g7f4qn7nqe2oh0llsc8lkgem.apps.googleusercontent.com",
           "client_type": 1,
           "android_info": {
