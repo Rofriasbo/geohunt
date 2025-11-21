@@ -48,6 +48,7 @@ dependencies:
   geolocator: ^10.1.0
   image_picker: ^1.0.7
   permission_handler: ^11.3.0
+  sensors_plus: ^5.0.1  # Para detectar el agitado
 
 dev_dependencies:
   flutter_test:

@@ -4,9 +4,10 @@ class UserModel {
   final String uid;
   final String? email;
   final String username;
-  final int score; // Solo para usuarios
-  final List<String>? foundTreasures; // Solo para usuarios
+  final int score;
+  final List<String>? foundTreasures;
   final String? phoneNumber;
+  final String? profileImageUrl; // NUEVO: Foto de perfil
   final String role;
 
   UserModel({
@@ -16,6 +17,7 @@ class UserModel {
     this.score = 0,
     this.foundTreasures,
     this.phoneNumber,
+    this.profileImageUrl, // NUEVO
     this.role = 'user',
   });
 
@@ -31,6 +33,7 @@ class UserModel {
           ? List<String>.from(treasuresList)
           : null,
       phoneNumber: data['phoneNumber'] as String?,
+      profileImageUrl: data['profileImageUrl'] as String?, // Leemos la imagen
       role: data['role'] ?? 'user',
     );
   }
@@ -42,6 +45,7 @@ class UserModel {
       'score': score,
       'foundTreasures': foundTreasures ?? [],
       'phoneNumber': phoneNumber,
+      'profileImageUrl': profileImageUrl, // Guardamos la imagen
       'role': role,
     };
   }
