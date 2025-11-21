@@ -1,91 +1,111 @@
-🌍 GeoHunt
-¡Bienvenido a GeoHunt! La plataforma definitiva de exploración y geolocalización. GeoHunt conecta el mundo físico con el virtual, permitiendo a los administradores esconder tesoros digitales y a los exploradores cazarlos usando tecnología GPS de vanguardia.
+# 🌍 GeoHunt
 
-🚀 Novedades de la Última Versión
-Esta versión introduce un sistema robusto de Roles (Admin/Usuario) y Navegación Inteligente:
+> **La plataforma definitiva de exploración y geolocalización.**
+> *Conecta el mundo físico con el virtual: esconde tesoros digitales y cázalos usando tecnología GPS de vanguardia.*
 
-🗺️ OpenStreetMap Integrado: Mapas libres y detallados sin costos de API.
+![Flutter](https://img.shields.io/badge/Flutter-02569B?style=for-the-badge&logo=flutter&logoColor=white)
+![Dart](https://img.shields.io/badge/Dart-0175C2?style=for-the-badge&logo=dart&logoColor=white)
+![Firebase](https://img.shields.io/badge/Firebase-FFCA28?style=for-the-badge&logo=firebase&logoColor=black)
+![Android](https://img.shields.io/badge/Android-3DDC84?style=for-the-badge&logo=android&logoColor=white)
 
-📍 Ruta Inteligente (Algoritmo Greedy): El sistema detecta tu ubicación y traza automáticamente la ruta óptima para recoger los tesoros más cercanos en un radio de 200 metros.
+---
 
-🛡️ Panel de Administración Completo: Gestión total de tesoros con interfaz visual (CRUD) y autenticación segura.
+## 🚀 Novedades de la Versión Actual (v2.0)
 
-👥 Roles de Usuario
-La aplicación divide la experiencia en dos perfiles clave:
+Esta versión transforma la experiencia con un sistema robusto de gestión y personalización:
 
-1. 🕵️‍♂️ Explorador (Usuario Normal)
-Objetivo: Navegar hasta los puntos de interés.
+* **🖼️ Perfiles Personalizados:** Integración con **Firebase Storage** para subir fotos de perfil desde la **Cámara** o **Galería**.
+* **🗺️ OpenStreetMap Integrado:** Mapas libres y detallados renderizados con `flutter_map`.
+* **📍 Ruta Inteligente (Smart Routing):** Algoritmo de "Vecino más cercano" que traza la ruta óptima para recoger tesoros en un radio de **200 metros**.
+* **🛡️ Panel Admin CRUD:** Gestión visual completa de tesoros y usuarios.
 
-Interacción: Visualiza el mapa y su posición en tiempo real.
+---
 
-Confirmación: Al llegar al radio del tesoro, debe completar un desafío físico (uso de sensores/acelerómetro) para reclamar la recompensa.
+## 👥 Roles y Funcionalidades
 
-2. 👑 Administrador (Admin)
-Acceso Exclusivo: Login diferenciado (opción de Google Sign-In o Correo).
+La aplicación adapta su interfaz según el perfil del usuario.
 
-Gestión de Tesoros (CRUD):
+| Característica | 🕵️‍♂️ Explorador (Usuario) | 👑 Administrador (Admin) |
+| :--- | :---: | :---: |
+| **Login** | Email / Contraseña | **Google Sign-In** / Email |
+| **Objetivo Principal** | Cazar Tesoros | Crear y Gestionar Tesoros |
+| **Mapa** | Ver ubicación y tesoros | Ver, Crear, Editar y Borrar (CRUD) |
+| **Rutas** | Navegación básica | **Trazado de Rutas de Prueba** |
+| **Perfil** | Visualización básica | **Edición completa con Foto** |
+| **Sensores** | Uso de Acelerómetro (Shake) | N/A |
 
-Crear: Tocar cualquier punto del mapa para esconder un tesoro.
+---
 
-Editar: Modificar dificultad, descripción o si es de "Tiempo Limitado".
+## 🧠 La Tecnología "Smart Route"
 
-Eliminar: Borrar tesoros obsoletos desde el mapa o la lista.
+GeoHunt no solo muestra puntos en un mapa. Implementa una lógica de optimización de rutas en tiempo real para el Administrador:
 
-Herramientas de Ruta: Visualización de rutas de recolección optimizadas para probar la experiencia de juego.
+1.  📡 **Detección:** Obtiene la posición GPS precisa (`Geolocator`).
+2.  🔍 **Filtrado:** Selecciona solo los tesoros dentro de un radio de **200 metros**.
+3.  📐 **Cálculo Geodésico:** Utiliza la librería `latlong2` para calcular distancias exactas.
+4.  🔗 **Algoritmo Greedy:** Conecta los puntos usando la lógica del *Vecino Más Cercano*, dibujando una `Polyline` azul en el mapa para guiar la recolección.
 
-Vistas Flexibles: Alterna entre Vista de Mapa y Lista de Inventario Detallada.
+---
 
-✨ Características Técnicas Destacadas
-🧠 Algoritmo de Rutas (Nearest Neighbor)
-GeoHunt no solo muestra puntos en un mapa. Implementa una lógica de Ruta Inteligente:
+## 🛠️ Stack Tecnológico
 
-Detecta la ubicación GPS del dispositivo.
+Arquitectura escalable basada en **Flutter** y servicios en la nube.
 
-Filtra los tesoros en un radio de 200 metros.
+### 📱 Frontend & Plugins
 
-Calcula la distancia entre puntos usando latlong2.
+| Paquete | Función Principal |
+| :--- | :--- |
+| `flutter_map` | Renderizado de mapas OpenStreetMap (Sin costos de API). |
+| `geolocator` | Rastreo de posición GPS en tiempo real (`Stream<Position>`). |
+| `latlong2` | Cálculos matemáticos de coordenadas y distancias. |
+| `image_picker` | Acceso nativo a la **Cámara** y **Galería**. |
+| `permission_handler`| Gestión segura de permisos de Android (GPS, Almacenamiento). |
 
-Dibuja una línea polilínea (PolylineLayer) conectando los tesoros en el orden más eficiente de distancia, guiando al usuario paso a paso.
+### 🔥 Backend (Firebase)
 
-📱 Interfaz y Navegación
-Drawer Personalizado: Menú lateral para navegación fluida entre Mapa, Inventario y Perfil.
+| Servicio | Uso en GeoHunt |
+| :--- | :--- |
+| **Authentication** | Login tradicional y **Google Sign-In** con validación SHA-1. |
+| **Firestore BD** | Base de datos NoSQL. Colecciones: `users` (Roles) y `treasures` (GeoPoints). |
+| **Storage** | Almacenamiento de imágenes de perfil optimizadas (Compresión JPG). |
 
-Bottom Navigation Bar: Acceso rápido para activar/desactivar el modo "Trazar Ruta" en el mapa.
+---
 
-Feedback Visual: Marcadores personalizados, chips de dificultad (Fácil/Medio/Difícil) y alertas visuales (Snackbars) para acciones de la base de datos.
+## ⚙️ Requisitos e Instalación
 
-🛠️ Stack Tecnológico
-El proyecto está construido con Flutter y una arquitectura escalable conectada a la nube.
+### Permisos de Android (`AndroidManifest.xml`)
+Para que la aplicación funcione al 100%, requiere los siguientes permisos:
 
-Frontend & Mapas
-Flutter Map (flutter_map): Renderizado de mapas OpenStreetMap.
+* 🛰️ **Ubicación:**
+    * `android.permission.ACCESS_FINE_LOCATION` (Ruta precisa).
+    * `android.permission.ACCESS_COARSE_LOCATION`.
+* 📸 **Multimedia:**
+    * `android.permission.READ_EXTERNAL_STORAGE` (Galería Android <13).
+    * `android.permission.READ_MEDIA_IMAGES` (Galería Android 13+).
+    * `android.permission.CAMERA`.
+* 🌐 **Red:**
+    * `android.permission.INTERNET`.
 
-Geolocator: Rastreo de posición GPS en tiempo real (Stream<Position>).
+### Requisitos de Hardware
+* Dispositivo Android (SDK Min 21).
+* GPS Funcional.
+* Cámara (Opcional para perfil).
 
-Latlong2: Cálculos geodésicos y manejo de coordenadas.
+---
 
-Backend (Firebase)
-Firebase Authentication:
+## 📂 Estructura del Proyecto (Clave)
 
-Login tradicional (Email/Password).
-
-Google Sign-In: Autenticación federada con gestión de huella SHA-1 segura.
-
-Cloud Firestore: Base de datos NoSQL en tiempo real.
-
-Colección users: Almacena perfiles y roles (admin/user).
-
-Colección treasures: Almacena documentos con GeoPoint, timestamps y metadatos del tesoro.
-
-⚙️ Requisitos del Sistema
-Android: Versión mínima SDK 21.
-
-Permisos:
-
-ACCESS_FINE_LOCATION (Para la ruta inteligente).
-
-ACCESS_COARSE_LOCATION.
-
-INTERNET.
-
-Hardware: GPS funcional y Acelerómetro (para la confirmación de hallazgo).
+```text
+lib/
+├── models/
+│   ├── users.dart        # Modelo para Explorador
+│   ├── admin_model.dart  # Modelo detallado para Admin
+│   └── tesoro.dart       # Modelo de Tesoro con GeoPoint
+├── screens/
+│   ├── login.dart        # Autenticación y Router de Roles
+│   ├── admin.dart        # Dashboard, Mapa Admin, Perfil
+│   └── pagina.dart       # Pantalla Usuario Normal
+├── services/
+│   ├── base.dart         # Lógica de Firestore
+│   └── registro_google.dart # Botón de Google con lógica de Admin
+└── main.dart             # Inicialización
