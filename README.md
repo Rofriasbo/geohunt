@@ -1,14 +1,114 @@
-🌍 GeoHunt¡Caza, Agita y Gana!La experiencia definitiva de geocaching digital. Explora tu ciudad, encuentra tesoros ocultos y usa el movimiento de tu teléfono para reclamarlos.<div align="center"></div>🚀 Novedades de la Versión Actual (v2.1: The Shake Update)Esta actualización transforma la aplicación de un mapa pasivo a un juego inmersivo:📳 Mecánica "Shake to Claim": ¡Ya no basta con llegar! Ahora debes agitar tu teléfono físicamente para desbloquear el tesoro.🎨 Feedback Visual en Tiempo Real: Los marcadores del mapa cambian de color según tu proximidad y estado (Lejos, Cerca, Encontrado).🏆 Sistema de Puntos Dinámico: Gana experiencia basada en la dificultad del tesoro y bonificaciones por tiempo limitado.📊 Leaderboard Filtrado: Compite solo contra otros exploradores (los Admins no aparecen en el ranking).🎮 Cómo Jugar (Mecánicas de Caza)El núcleo del juego se basa en la interacción física con el entorno y el dispositivo.1. Estados de los Tesoros (Marcadores)Icono / ColorEstadoSignificadoAcción Requerida🔴 RojoLejosEl tesoro está activo pero estás a más de 5 metros.Navegar: Acércate usando el mapa o la ruta inteligente.🟢 VerdeEn Rango¡Estás en la zona caliente (< 5m)!¡AGITAR! Usa el sensor de tu teléfono.🔘 GrisEncontradoYa has reclamado este tesoro.Ninguna. (Queda como trofeo en tu mapa).2. Sistema de Puntuación¡No todos los tesoros valen lo mismo! Busca los más difíciles para subir rápido en el Top 10.DificultadPuntos BaseBonus (Tiempo Limitado)Total Posible🟢 Fácil100 pts+200 pts300 pts🟡 Medio300 pts+200 pts500 pts🔴 Difícil500 pts+200 pts700 pts👥 Roles y FuncionalidadesCaracterística🕵️‍♂️ Explorador (Usuario)👑 Administrador (Admin)LoginEmail / ContraseñaGoogle Sign-In / EmailMisiónEncontrar y AgitarEsconder y GestionarMapaVer ubicación, tesoros y radio de acciónCRUD completo (Crear tocando el mapa)RutasRuta de recolección óptimaSimulador de rutasSensoresAcelerómetro ActivoN/APerfilFoto, Stats y RankingEdición completa🛠️ Stack Tecnológico ActualizadoArquitectura escalable basada en Flutter y servicios en la nube.📱 Frontend & SensoresPaqueteFunción Principalflutter_mapRenderizado de mapas OpenStreetMap (Sin costos de API).geolocatorRastreo GPS de alta precisión (bestForNavigation).sensors_plusNUEVO: Acceso al acelerómetro para detectar el gesto de "Shake".latlong2Cálculo de distancias (Haversine) para detectar el radio de 5m.image_pickerSubida de fotos de perfil (Cámara/Galería).permission_handlerGestión de permisos (Cámara, GPS, Storage).🔥 Backend (Firebase)Authentication: Gestión de roles segura.Firestore:Índices compuestos para Leaderboards (role + score).Transacciones atómicas (WriteBatch) para asegurar que el puntaje y el estado de "encontrado" se guarden simultáneamente.Storage: Alojamiento de avatares de usuario optimizados.⚙️ Requisitos e InstalaciónPermisos de Android (AndroidManifest.xml)Para disfrutar la experiencia completa:🛰️ Ubicación: ACCESS_FINE_LOCATION (Crítico para detectar los 5 metros).📸 Cámara/Galería: Para personalizar tu perfil.🌐 Internet: Para cargar mapas y sincronizar puntuaciones.Requisitos de HardwareGPS: Obligatorio.Acelerómetro: Obligatorio (Sin esto no se puede reclamar el tesoro).📂 Estructura del ProyectoPlaintextlib/
+# 🌍 GeoHunt
+
+> **La plataforma definitiva de exploración y geolocalización.**
+> *Conecta el mundo físico con el virtual: esconde tesoros digitales y cázalos usando tecnología GPS de vanguardia y sensores de movimiento.*
+
+![Flutter](https://img.shields.io/badge/Flutter-02569B?style=for-the-badge&logo=flutter&logoColor=white)
+![Dart](https://img.shields.io/badge/Dart-0175C2?style=for-the-badge&logo=dart&logoColor=white)
+![Firebase](https://img.shields.io/badge/Firebase-FFCA28?style=for-the-badge&logo=firebase&logoColor=black)
+![Android](https://img.shields.io/badge/Android-3DDC84?style=for-the-badge&logo=android&logoColor=white)
+
+---
+
+## 🚀 Novedades de la Versión Actual (v2.1)
+
+Esta versión eleva la experiencia de juego con mecánicas interactivas y retroalimentación visual en tiempo real:
+
+* **👋 Mecánica "Shake to Claim":** Utiliza el acelerómetro del dispositivo. Cuando estás cerca de un tesoro (< 5m), ¡agita el teléfono para reclamarlo!
+* **🎨 Marcadores Dinámicos:** Los pines del mapa cambian de color según su estado:
+    * 🔴 **Rojo:** Tesoro disponible (lejos).
+    * 🟢 **Verde:** En rango (¡Agita ahora!).
+    * 🔘 **Gris:** Tesoro ya encontrado (Bloqueado).
+* **🖼️ Perfiles Completos:** Gestión de avatar con cámara/galería tanto para Admins como para Usuarios.
+* **📍 Ruta Inteligente Filtrada:** El algoritmo de ruta ahora ignora automáticamente los tesoros que ya has encontrado.
+
+---
+
+## 👥 Roles y Funcionalidades
+
+La aplicación adapta su interfaz y lógica de juego según el perfil del usuario.
+
+| Característica | 🕵️‍♂️ Explorador (Usuario) | 👑 Administrador (Admin) |
+| :--- | :---: | :---: |
+| **Login** | Email / Contraseña | **Google Sign-In** / Email |
+| **Objetivo Principal** | Cazar y Acumular Puntos | Crear y Gestionar el Mundo |
+| **Mapa** | Ver, Navegar y **Reclamar (Shake)** | Ver, Crear, Editar y Borrar (CRUD) |
+| **Rutas** | Ruta inteligente hacia tesoros pendientes | Trazado de rutas de prueba |
+| **Perfil** | Edición, Foto y Estadísticas | Edición completa y Gestión |
+| **Ranking** | Acceso al **Top 10 Global** | Visualización (sin participar) |
+
+---
+
+## 🧠 Tecnología y Algoritmos
+
+GeoHunt combina sensores de hardware con lógica de nube en tiempo real:
+
+### 1. Sistema de Reclamo (Proximidad + Sensores)
+* **Geofencing Local:** La app calcula la distancia (`latlong2`) en cada actualización del GPS.
+* **Estado de Alerta:** Si la distancia es `< 5 metros`, el marcador se vuelve verde y se activa el listener del acelerómetro (`sensors_plus`).
+* **Detección de Gesto:** Se monitorea la fuerza G. Si se detecta una aceleración brusca (> 15 m/s²), se dispara el evento de captura.
+
+### 2. Smart Route (Algoritmo Greedy)
+El trazado de ruta se recalcula dinámicamente:
+1.  Filtra los tesoros `foundTreasures` del usuario.
+2.  Selecciona los restantes en un radio de **200 metros**.
+3.  Conecta los puntos usando la lógica del *Vecino Más Cercano* para optimizar la caminata.
+
+---
+
+## 🛠️ Stack Tecnológico
+
+Arquitectura escalable basada en **Flutter** y servicios en la nube.
+
+### 📱 Frontend & Plugins
+
+| Paquete | Función Principal |
+| :--- | :--- |
+| `flutter_map` | Renderizado de mapas OpenStreetMap (Sin costos de API). |
+| `geolocator` | Rastreo de posición GPS en tiempo real. |
+| `sensors_plus` | **Acceso al Acelerómetro** para la mecánica de Shake. |
+| `image_picker` | Acceso nativo a la Cámara y Galería. |
+| `permission_handler`| Gestión segura de permisos de Android. |
+
+### 🔥 Backend (Firebase)
+
+| Servicio | Uso en GeoHunt |
+| :--- | :--- |
+| **Authentication** | Login tradicional y Google Sign-In con validación SHA-1. |
+| **Firestore BD** | Base de datos NoSQL. Índices compuestos para Leaderboards. |
+| **Storage** | Almacenamiento de imágenes de perfil optimizadas. |
+
+---
+
+## ⚙️ Requisitos e Instalación
+
+### Permisos de Android (`AndroidManifest.xml`)
+Para que la experiencia de juego sea completa, se requieren los siguientes permisos:
+
+* 🛰️ **Ubicación:** `ACCESS_FINE_LOCATION` (Vital para detectar los 5 metros).
+* 📸 **Multimedia:** `READ_MEDIA_IMAGES` / `CAMERA` (Para el perfil).
+* 🌐 **Red:** `INTERNET`.
+
+### Requisitos de Hardware
+* Dispositivo Android (SDK Min 21).
+* **GPS Funcional** (Alta precisión).
+* **Acelerómetro** (Indispensable para reclamar tesoros).
+
+---
+
+## 📂 Estructura del Proyecto
+
+```text
+lib/
 ├── models/
-│   ├── users.dart        # Modelo Explorador (con Score y FoundTreasures)
-│   ├── admin_model.dart  # Modelo Admin (con Permisos)
-│   └── tesoro.dart       # Modelo Tesoro (con GeoPoint y Dificultad)
+│   ├── users.dart        # Modelo de Explorador (con Score e Historial)
+│   ├── admin_model.dart  # Modelo de Administrador
+│   └── tesoro.dart       # Modelo de Tesoro (GeoPoint, Dificultad)
 ├── screens/
 │   ├── login.dart        # Router de Roles
-│   ├── admin.dart        # Dashboard Admin
-│   └── pagina.dart       # Juego Principal (Lógica Shake & Map)
+│   ├── admin.dart        # Dashboard Admin (CRUD + Mapa)
+│   └── pagina.dart       # Interfaz de Juego (Mapa + Shake + Ranking)
 ├── services/
-│   ├── base.dart         # Lógica Firestore
-│   └── registro_google.dart # Auth Social
+│   ├── base.dart         # Lógica de Firestore
+│   └── registro_google.dart # Autenticación federada
 └── main.dart             # Inicialización
-<div align="center"><sub>Desarrollado con 💙 y mucho ☕ en Flutter</sub></div>
