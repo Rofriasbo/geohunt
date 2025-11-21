@@ -1,5 +1,6 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'user.dart';
+import 'admin_model.dart'; // Importamos el nuevo modelo
 import 'tesoro.dart';
 
 class DatabaseService {
@@ -8,57 +9,38 @@ class DatabaseService {
   final String _userCollection = 'users';
   final String _treasureCollection = 'treasures';
 
-  // --- MÉTODOS DE USUARIO ---
+  // --- USUARIOS ---
   Future<void> createUser(UserModel user) async {
-    try {
-      await _db.collection(_userCollection).doc(user.uid).set(user.toJson());
-    } catch (e) {
-      print('Error al crear usuario: $e');
-      rethrow;
-    }
+    await _db.collection(_userCollection).doc(user.uid).set(user.toJson());
   }
 
-  Future<UserModel?> getUserData(String uid) async {
+  // Método específico para crear/actualizar Admins
+  Future<void> createOrUpdateAdmin(AdminModel admin) async {
+    await _db.collection(_userCollection).doc(admin.uid).set(admin.toJson(), SetOptions(merge: true));
+  }
+
+  // Método genérico para obtener datos crudos y decidir el modelo después
+  Future<DocumentSnapshot?> getUserSnapshot(String uid) async {
     try {
-      final doc = await _db.collection(_userCollection).doc(uid).get();
-      if (doc.exists && doc.data() != null) {
-        return UserModel.fromMap(doc.data()!, doc.id);
-      }
-      return null;
+      return await _db.collection(_userCollection).doc(uid).get();
     } catch (e) {
-      print('Error al obtener datos: $e');
+      print('Error al obtener snapshot: $e');
       return null;
     }
   }
 
-  Future<void> updateUserData(String uid, Map<String, dynamic> data) async {
-    await _db.collection(_userCollection).doc(uid).update(data);
-  }
-
-  // --- MÉTODOS DE TESOROS (CRUD) ---
-
-  // Create
+  // --- TESOROS ---
   Future<String?> createTreasure(TreasureModel treasure) async {
     try {
-      // Firestore genera el ID automáticamente al usar .doc() vacío,
-      // pero aquí usamos el ID que ya trae el modelo o dejamos que set lo cree
-      // Lo mejor es dejar que Firestore genere el ID:
       final docRef = _db.collection(_treasureCollection).doc();
-      // Guardamos los datos usando el ID generado
       await docRef.set(treasure.toJson());
       return docRef.id;
     } catch (e) {
-      print('Error al crear tesoro: $e');
+      print('Error: $e');
       return null;
     }
   }
 
-  // Helper para crear directamente desde Mapa y GeoPoint (usado en Admin)
-  Future<void> addTreasureRaw(Map<String, dynamic> data) async {
-    await _db.collection(_treasureCollection).add(data);
-  }
-
-  // Read (Stream)
   Stream<List<TreasureModel>> getTreasures() {
     return _db.collection(_treasureCollection).snapshots().map((snapshot) {
       return snapshot.docs.map((doc) {
@@ -67,29 +49,16 @@ class DatabaseService {
     });
   }
 
-  // Update
   Future<void> updateTreasure(String treasureId, Map<String, dynamic> data) async {
-    try {
-      await _db.collection(_treasureCollection).doc(treasureId).update(data);
-    } catch (e) {
-      print('Error al actualizar tesoro: $e');
-      rethrow;
-    }
+    await _db.collection(_treasureCollection).doc(treasureId).update(data);
   }
 
-  // Delete
   Future<void> deleteTreasure(String treasureId) async {
-    try {
-      await _db.collection(_treasureCollection).doc(treasureId).delete();
-    } catch (e) {
-      print('Error al eliminar tesoro: $e');
-      rethrow;
-    }
+    await _db.collection(_treasureCollection).doc(treasureId).delete();
   }
 
   Future<void> markTreasureAsFound(String userUid, String treasureId) async {
     final userRef = _db.collection(_userCollection).doc(userUid);
-    // CORREGIDO: Quité el espacio en 'foundTreasures'
     await userRef.update({
       'foundTreasures': FieldValue.arrayUnion([treasureId]),
     });

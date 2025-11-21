@@ -3,8 +3,9 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'registro.dart';
 import 'pagina.dart';
-import 'admin.dart'; // IMPORTANTE
+import 'admin.dart';
 import 'user.dart';
+import 'admin_model.dart'; // IMPORTANTE
 import 'registro_google.dart';
 
 class Login extends StatefulWidget {
@@ -49,15 +50,22 @@ class _LoginState extends State<Login> {
       final docSnapshot = await _firestore.collection('users').doc(uid).get();
 
       if (docSnapshot.exists && docSnapshot.data() != null) {
-        UserModel user = UserModel.fromMap(docSnapshot.data()!, docSnapshot.id);
+        final data = docSnapshot.data() as Map<String, dynamic>;
+        final String role = data['role'] ?? 'user';
 
         if (mounted) {
-          // Redirección basada en Rol
-          if (user.role == 'admin') {
+          // --- LÓGICA CORREGIDA ---
+          if (role == 'admin') {
+            // Convertimos a AdminModel
+            AdminModel admin = AdminModel.fromMap(data, docSnapshot.id);
+
+            // Navegamos usando el parámetro correcto 'adminUser'
             Navigator.of(context).pushReplacement(
-              MaterialPageRoute(builder: (context) => AdminScreen(user: user)),
+              MaterialPageRoute(builder: (context) => AdminScreen(adminUser: admin)),
             );
           } else {
+            // Convertimos a UserModel
+            UserModel user = UserModel.fromMap(data, docSnapshot.id);
             Navigator.of(context).pushReplacement(
               MaterialPageRoute(builder: (context) => WelcomeScreen(username: user.username)),
             );
