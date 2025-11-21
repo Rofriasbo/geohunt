@@ -2,19 +2,23 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 
 class UserModel {
   final String uid;
-  final String email;
+  final String? email;
   final String username;
   final int score;
   final List<String>? foundTreasures;
-  final String role; // Nuevo campo para el rol
+  final String? phoneNumber;
+  final String? profileImageUrl; // NUEVO: Foto de perfil
+  final String role;
 
   UserModel({
     required this.uid,
-    required this.email,
+    this.email,
     required this.username,
     this.score = 0,
     this.foundTreasures,
-    this.role = 'user', // Por defecto
+    this.phoneNumber,
+    this.profileImageUrl, // NUEVO
+    this.role = 'user',
   });
 
   factory UserModel.fromMap(Map<String, dynamic> data, String documentId) {
@@ -22,12 +26,14 @@ class UserModel {
 
     return UserModel(
       uid: documentId,
-      email: data['email'] ?? '',
+      email: data['email'] as String?,
       username: data['username'] ?? 'Explorador',
       score: data['score'] ?? 0,
       foundTreasures: treasuresList != null
           ? List<String>.from(treasuresList)
           : null,
+      phoneNumber: data['phoneNumber'] as String?,
+      profileImageUrl: data['profileImageUrl'] as String?, // Leemos la imagen
       role: data['role'] ?? 'user',
     );
   }
@@ -38,6 +44,8 @@ class UserModel {
       'username': username,
       'score': score,
       'foundTreasures': foundTreasures ?? [],
+      'phoneNumber': phoneNumber,
+      'profileImageUrl': profileImageUrl, // Guardamos la imagen
       'role': role,
     };
   }
