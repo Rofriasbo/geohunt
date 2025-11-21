@@ -11,6 +11,7 @@ import 'package:geolocator/geolocator.dart';
 import 'dart:async';
 import 'tesoro.dart';
 import 'admin_model.dart';
+import 'user.dart';
 import 'login.dart';
 
 class AdminScreen extends StatefulWidget {
@@ -55,16 +56,21 @@ class _AdminScreenState extends State<AdminScreen> {
         final data = snapshot.data!.data() as Map<String, dynamic>;
         final currentAdmin = AdminModel.fromMap(data, widget.adminUser.uid);
 
+        // --- LISTA DE VISTAS ---
         final List<Widget> _widgetOptions = <Widget>[
-          TreasuresMapView(adminUid: currentAdmin.uid),
-          const TreasuresListView(),
-          ProfileEditView(adminUser: currentAdmin),
+          TreasuresMapView(adminUid: currentAdmin.uid), // 0
+          const TreasuresListView(),                    // 1
+          const UsersListView(),                        // 2
+          ProfileEditView(adminUser: currentAdmin),     // 3
+          const AdminManualView(),                      // 4: NUEVO MANUAL
         ];
 
         final List<String> _titles = [
-          'GEO HUNT',
-          'Inventario',
-          'Perfil Admin'
+          'GEO HUNT - Admin',
+          'Inventario de Tesoros',
+          'Gestión de Exploradores',
+          'Perfil Admin',
+          'Manual de Usuario' // Título nuevo
         ];
 
         return Scaffold(
@@ -76,14 +82,12 @@ class _AdminScreenState extends State<AdminScreen> {
             child: ListView(
               padding: EdgeInsets.zero,
               children: [
-                // --- CORRECCIÓN AQUÍ: Usamos DrawerHeader en lugar de UserAccountsDrawerHeader ---
                 DrawerHeader(
                   decoration: const BoxDecoration(color: Color(0xFF91B1A8)),
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
-                      // 1. IMAGEN DE PERFIL
                       CircleAvatar(
                         radius: 35,
                         backgroundColor: Colors.white,
@@ -98,7 +102,6 @@ class _AdminScreenState extends State<AdminScreen> {
                             : null,
                       ),
                       const SizedBox(height: 15),
-                      // 2. SOLO EL NOMBRE (Sin email, sin overflow)
                       Text(
                         currentAdmin.username,
                         style: const TextStyle(
@@ -112,12 +115,21 @@ class _AdminScreenState extends State<AdminScreen> {
                     ],
                   ),
                 ),
-                // --------------------------------------------------------------------------------
-
                 ListTile(leading: const Icon(Icons.map), title: const Text('Mapa y Rutas'), selected: _selectedIndex == 0, onTap: () => _onItemTapped(0)),
-                ListTile(leading: const Icon(Icons.list_alt), title: const Text('Lista Detallada'), selected: _selectedIndex == 1, onTap: () => _onItemTapped(1)),
-                ListTile(leading: const Icon(Icons.person), title: const Text('Modificar Perfil'), selected: _selectedIndex == 2, onTap: () => _onItemTapped(2)),
+                ListTile(leading: const Icon(Icons.diamond), title: const Text('Lista de Tesoros'), selected: _selectedIndex == 1, onTap: () => _onItemTapped(1)),
+                ListTile(leading: const Icon(Icons.people), title: const Text('Exploradores'), selected: _selectedIndex == 2, onTap: () => _onItemTapped(2)),
+                ListTile(leading: const Icon(Icons.person), title: const Text('Modificar Perfil'), selected: _selectedIndex == 3, onTap: () => _onItemTapped(3)),
+
+                // --- NUEVA SECCIÓN DE MANUAL ---
                 const Divider(),
+                ListTile(
+                    leading: const Icon(Icons.menu_book, color: Color(0xFF8992D7)),
+                    title: const Text('Manual de Usuario'),
+                    selected: _selectedIndex == 4,
+                    onTap: () => _onItemTapped(4)
+                ),
+                // -------------------------------
+
                 ListTile(leading: const Icon(Icons.logout, color: Colors.red), title: const Text('Cerrar Sesión'), onTap: _signOut),
               ],
             ),
@@ -129,7 +141,249 @@ class _AdminScreenState extends State<AdminScreen> {
   }
 }
 
-// --- RESTO DEL CÓDIGO IGUAL ---
+// ---------------------------------------------------------------------------
+// VISTA 5: MANUAL DE USUARIO (NUEVA IMPLEMENTACIÓN DETALLADA)
+// ---------------------------------------------------------------------------
+class AdminManualView extends StatelessWidget {
+  const AdminManualView({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      color: Colors.grey[50],
+      child: ListView(
+        padding: const EdgeInsets.all(16.0),
+        children: const [
+          _ManualHeader(),
+          SizedBox(height: 20),
+          _ManualSection(
+            icon: Icons.map,
+            title: "1. Gestión de Tesoros (Mapa)",
+            content: "El mapa es tu herramienta principal para esconder tesoros:\n\n"
+                "• CREAR: Toca cualquier punto del mapa para colocar un nuevo tesoro. Se abrirá un formulario para llenar los datos.\n"
+                "• EDITAR: Toca un marcador existente (📍) y selecciona 'Editar' en la ventana emergente para cambiar sus datos.\n"
+                "• ELIMINAR: Toca un marcador y selecciona 'Eliminar' para borrarlo permanentemente.",
+          ),
+          _ManualSection(
+            icon: Icons.alt_route,
+            title: "2. Rutas Inteligentes",
+            content: "En la parte inferior del mapa, tienes una barra de navegación:\n\n"
+                "• MODO EXPLORAR: Solo visualizas los marcadores.\n"
+                "• TRAZAR RUTA: Activa el algoritmo inteligente. Si tienes el GPS activo, el sistema detectará los tesoros en un radio de 200 metros y trazará una línea azul óptima para recogerlos uno por uno.",
+          ),
+          _ManualSection(
+            icon: Icons.diamond,
+            title: "3. Detalles del Tesoro",
+            content: "Al crear un tesoro puedes configurar:\n\n"
+                "• Título y Descripción: Información para el jugador.\n"
+                "• Dificultad: Fácil, Medio o Difícil.\n"
+                "• Tiempo Limitado: Activa el interruptor si es un evento especial. Esto otorga puntos extra a los jugadores.",
+          ),
+          _ManualSection(
+            icon: Icons.people,
+            title: "4. Gestión de Exploradores",
+            content: "En la sección 'Exploradores' del menú:\n\n"
+                "• Visualiza una lista de todos los jugadores registrados (no admins).\n"
+                "• Toca sobre un usuario para ver su ficha completa: foto, correo, teléfono y estadísticas de juego.\n"
+                "• Útil para contactar ganadores o verificar actividad.",
+          ),
+          _ManualSection(
+            icon: Icons.person_pin,
+            title: "5. Tu Perfil Admin",
+            content: "Mantén tu identidad actualizada:\n\n"
+                "• FOTO: Toca tu avatar para subir una foto desde la Cámara o Galería.\n"
+                "• DATOS: Puedes editar tu nombre de usuario y teléfono de contacto.\n"
+                "• El correo electrónico no se puede cambiar por seguridad.",
+          ),
+          SizedBox(height: 40),
+          Center(
+            child: Text(
+              "GeoHunt v2.1 - Panel Administrativo",
+              style: TextStyle(color: Colors.grey, fontSize: 12),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _ManualHeader extends StatelessWidget {
+  const _ManualHeader();
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.all(20),
+      decoration: BoxDecoration(
+        color: const Color(0xFF91B1A8),
+        borderRadius: BorderRadius.circular(15),
+        boxShadow: const [BoxShadow(color: Colors.black12, blurRadius: 10, offset: Offset(0, 5))],
+      ),
+      child: const Column(
+        children: [
+          Icon(Icons.help_outline, size: 50, color: Colors.white),
+          SizedBox(height: 10),
+          Text(
+            "Guía de Administración",
+            style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold, color: Colors.white),
+          ),
+          SizedBox(height: 5),
+          Text(
+            "Aprende a controlar el mundo de GeoHunt",
+            style: TextStyle(color: Colors.white70),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _ManualSection extends StatelessWidget {
+  final IconData icon;
+  final String title;
+  final String content;
+
+  const _ManualSection({required this.icon, required this.title, required this.content});
+
+  @override
+  Widget build(BuildContext context) {
+    return Card(
+      margin: const EdgeInsets.only(bottom: 15),
+      elevation: 2,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+      child: ExpansionTile(
+        leading: CircleAvatar(
+          backgroundColor: const Color(0xFFE9F3F0),
+          child: Icon(icon, color: const Color(0xFF8CB9AC)),
+        ),
+        title: Text(
+          title,
+          style: const TextStyle(fontWeight: FontWeight.bold, color: Color(0xFF5A5A5A)),
+        ),
+        children: [
+          Padding(
+            padding: const EdgeInsets.all(16.0),
+            child: Text(
+              content,
+              style: const TextStyle(fontSize: 15, height: 1.5, color: Colors.black87),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+// ---------------------------------------------------------------------------
+// RESTO DE VISTAS (MAPA, LISTAS, PERFIL) - SIN CAMBIOS
+// ---------------------------------------------------------------------------
+
+// VISTA 4: LISTA DE USUARIOS
+class UsersListView extends StatelessWidget {
+  const UsersListView({super.key});
+
+  void _showUserDetails(BuildContext context, UserModel user) {
+    showDialog(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: Row(
+          children: [
+            CircleAvatar(
+              backgroundImage: user.profileImageUrl != null ? NetworkImage(user.profileImageUrl!) : null,
+              child: user.profileImageUrl == null ? const Icon(Icons.person) : null,
+            ),
+            const SizedBox(width: 10),
+            Expanded(child: Text(user.username, style: const TextStyle(fontSize: 18))),
+          ],
+        ),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            _infoRow(Icons.email, 'Correo:', user.email ?? 'No registrado'),
+            const SizedBox(height: 10),
+            _infoRow(Icons.phone, 'Teléfono:', user.phoneNumber ?? 'No registrado'),
+            const SizedBox(height: 10),
+            _infoRow(Icons.emoji_events, 'Puntaje:', '${user.score} pts'),
+            const SizedBox(height: 10),
+            _infoRow(Icons.diamond, 'Tesoros Hallados:', '${user.foundTreasures?.length ?? 0}'),
+            const SizedBox(height: 10),
+            const Divider(),
+            Text('UID: ${user.uid}', style: const TextStyle(fontSize: 10, color: Colors.grey)),
+          ],
+        ),
+        actions: [
+          TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('Cerrar')),
+        ],
+      ),
+    );
+  }
+
+  Widget _infoRow(IconData icon, String label, String value) {
+    return Row(
+      children: [
+        Icon(icon, size: 18, color: const Color(0xFF8992D7)),
+        const SizedBox(width: 8),
+        Text('$label ', style: const TextStyle(fontWeight: FontWeight.bold)),
+        Expanded(child: Text(value, overflow: TextOverflow.ellipsis)),
+      ],
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return StreamBuilder<QuerySnapshot>(
+      stream: FirebaseFirestore.instance.collection('users').where('role', isEqualTo: 'user').snapshots(),
+      builder: (context, snapshot) {
+        if (snapshot.hasError) return Center(child: Text('Error: ${snapshot.error}'));
+        if (snapshot.connectionState == ConnectionState.waiting) return const Center(child: CircularProgressIndicator());
+
+        if (!snapshot.hasData || snapshot.data!.docs.isEmpty) {
+          return const Center(
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Icon(Icons.people_outline, size: 60, color: Colors.grey),
+                Text('No hay exploradores registrados.'),
+              ],
+            ),
+          );
+        }
+
+        return ListView.builder(
+          itemCount: snapshot.data!.docs.length,
+          itemBuilder: (context, index) {
+            final doc = snapshot.data!.docs[index];
+            final user = UserModel.fromMap(doc.data() as Map<String, dynamic>, doc.id);
+
+            return Card(
+              margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+              elevation: 2,
+              child: ListTile(
+                leading: CircleAvatar(
+                  backgroundColor: const Color(0xFF91B1A8),
+                  backgroundImage: user.profileImageUrl != null ? NetworkImage(user.profileImageUrl!) : null,
+                  child: user.profileImageUrl == null ? Text(user.username.isNotEmpty ? user.username[0].toUpperCase() : '?') : null,
+                ),
+                title: Text(user.username, style: const TextStyle(fontWeight: FontWeight.bold)),
+                subtitle: Text(user.email ?? 'Sin correo'),
+                trailing: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    const Icon(Icons.emoji_events, color: Colors.amber, size: 20),
+                    Text('${user.score}', style: const TextStyle(fontWeight: FontWeight.bold)),
+                  ],
+                ),
+                onTap: () => _showUserDetails(context, user),
+              ),
+            );
+          },
+        );
+      },
+    );
+  }
+}
 
 class ProfileEditView extends StatefulWidget {
   final AdminModel adminUser;
@@ -158,7 +412,7 @@ class _ProfileEditViewState extends State<ProfileEditView> {
     if (oldWidget.adminUser != widget.adminUser) {
       _usernameController.text = widget.adminUser.username;
       _phoneController.text = widget.adminUser.phoneNumber ?? '';
-      _currentImageUrl = widget.adminUser.profileImageUrl; // Actualizar imagen localmente si cambia
+      _currentImageUrl = widget.adminUser.profileImageUrl;
     }
   }
 
