@@ -1,6 +1,6 @@
 import 'dart:async';
 import 'dart:io';
-import 'dart:math'; // Para calcular la fuerza del Shake
+import 'dart:math'; // Para Shake
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
@@ -10,7 +10,7 @@ import 'package:permission_handler/permission_handler.dart';
 import 'package:flutter_map/flutter_map.dart';
 import 'package:latlong2/latlong.dart';
 import 'package:geolocator/geolocator.dart';
-import 'package:sensors_plus/sensors_plus.dart'; // IMPORTANTE: Sensores
+import 'package:sensors_plus/sensors_plus.dart';
 import 'login.dart';
 import 'user.dart';
 import 'tesoro.dart';
@@ -86,7 +86,7 @@ class _WelcomeScreenState extends State<WelcomeScreen> {
 }
 
 // ---------------------------------------------------------------------------
-// VISTA 1: MAPA DEL USUARIO (CON LÓGICA DE COLORES)
+// VISTA 1: MAPA DEL USUARIO (Visualización de Tesoros + Fotos)
 // ---------------------------------------------------------------------------
 class UserMapView extends StatefulWidget {
   final UserModel user;
@@ -124,7 +124,6 @@ class _UserMapViewState extends State<UserMapView> {
     super.dispose();
   }
 
-  // --- 1. SENSOR SHAKE ---
   void _initSensor() {
     _accelerometerSubscription = userAccelerometerEvents.listen((UserAccelerometerEvent event) {
       double acceleration = sqrt(event.x * event.x + event.y * event.y + event.z * event.z);
@@ -135,13 +134,11 @@ class _UserMapViewState extends State<UserMapView> {
   }
 
   void _onShakeDetected() {
-    // Solo reclamar si hay uno en rango y no se está procesando ya
     if (_treasureInRange != null && !_isClaiming) {
       _claimTreasure(_treasureInRange!);
     }
   }
 
-  // --- 2. RECLAMAR TESORO ---
   Future<void> _claimTreasure(TreasureModel treasure) async {
     setState(() { _isClaiming = true; });
 
@@ -196,7 +193,6 @@ class _UserMapViewState extends State<UserMapView> {
     }
   }
 
-  // --- 3. GPS ---
   Future<void> _checkLocationPermissions() async {
     bool serviceEnabled = await Geolocator.isLocationServiceEnabled();
     if (!serviceEnabled) return;
@@ -222,7 +218,6 @@ class _UserMapViewState extends State<UserMapView> {
     if (_currentPosition != null) _mapController.move(_currentPosition!, 18);
   }
 
-  // Ruta optimizada: Solo considera los NO encontrados para guiarte
   List<LatLng> _calculateOptimizedRoute(List<TreasureModel> uncollectedTreasures) {
     if (_currentPosition == null) return [];
     List<TreasureModel> nearby = uncollectedTreasures.where((t) => _distanceCalculator.as(LengthUnit.Meter, _currentPosition!, LatLng(t.location.latitude, t.location.longitude)) <= 200).toList();
@@ -244,19 +239,40 @@ class _UserMapViewState extends State<UserMapView> {
     return path;
   }
 
+  // DETALLES CON IMAGEN DE PISTA
   void _showTreasureDetails(TreasureModel t, bool isFound) {
-    showDialog(context: context, builder: (ctx) => AlertDialog(
-      title: Text(t.title),
-      content: Column(mainAxisSize: MainAxisSize.min, crossAxisAlignment: CrossAxisAlignment.start, children: [
-        Text(t.description),
-        const SizedBox(height: 10),
-        if (isFound)
-          const Chip(label: Text("YA ENCONTRADO"), backgroundColor: Colors.grey, labelStyle: TextStyle(color: Colors.white))
-        else
-          Chip(label: Text(t.difficulty), backgroundColor: t.difficulty == 'Difícil' ? Colors.red[100] : Colors.green[100]),
-      ]),
-      actions: [TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('Cerrar'))],
-    ));
+    showDialog(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: Text(t.title),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            // IMAGEN SI EXISTE
+            if (t.imageUrl != null && t.imageUrl!.isNotEmpty)
+              Padding(
+                padding: const EdgeInsets.only(bottom: 10),
+                child: ClipRRect(
+                  borderRadius: BorderRadius.circular(8),
+                  child: Image.network(t.imageUrl!, height: 150, width: double.infinity, fit: BoxFit.cover),
+                ),
+              ),
+
+            Text(t.description),
+            const SizedBox(height: 10),
+
+            if (isFound)
+              const Chip(label: Text("YA ENCONTRADO"), backgroundColor: Colors.grey, labelStyle: TextStyle(color: Colors.white))
+            else
+              Chip(label: Text(t.difficulty), backgroundColor: t.difficulty == 'Difícil' ? Colors.red[100] : Colors.green[100]),
+
+            if (t.isLimitedTime) const Chip(label: Text('¡Tiempo Limitado!'), backgroundColor: Colors.orangeAccent),
+          ],
+        ),
+        actions: [TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('Cerrar'))],
+      ),
+    );
   }
 
   @override
@@ -278,17 +294,14 @@ class _UserMapViewState extends State<UserMapView> {
 
               if (snapshot.hasData) {
                 final allDocs = snapshot.data!.docs;
-                // Lista completa de todos los tesoros
                 final allTreasures = allDocs.map((d) => TreasureModel.fromMap(d.data() as Map<String, dynamic>, d.id)).toList();
 
-                // Lista solo de los NO encontrados (para la ruta)
                 final uncollectedTreasures = allTreasures.where((t) => !(widget.user.foundTreasures?.contains(t.id) ?? false)).toList();
 
-                // 1. Lógica de Proximidad (Solo para no encontrados)
                 if (_currentPosition != null) {
                   for (var t in uncollectedTreasures) {
                     final double dist = _distanceCalculator.as(LengthUnit.Meter, _currentPosition!, LatLng(t.location.latitude, t.location.longitude));
-                    if (dist <= 5) { // 5 Metros
+                    if (dist <= 5) {
                       closestTreasure = t;
                       if (_treasureInRange != t) {
                         WidgetsBinding.instance.addPostFrameCallback((_) { setState(() { _treasureInRange = t; }); });
@@ -300,23 +313,19 @@ class _UserMapViewState extends State<UserMapView> {
                   }
                 }
 
-                // 2. Construcción de Marcadores (TODOS LOS TESOROS)
                 markers = allTreasures.map((t) {
-                  // Determinamos si este tesoro específico ya fue encontrado
                   bool isFound = widget.user.foundTreasures?.contains(t.id) ?? false;
-
-                  // Definimos color e icono
                   Color markerColor;
                   IconData markerIcon;
 
                   if (isFound) {
-                    markerColor = Colors.grey; // Color apagado para encontrados
-                    markerIcon = Icons.check_circle; // Icono de check
+                    markerColor = Colors.grey;
+                    markerIcon = Icons.check_circle;
                   } else if (t == _treasureInRange) {
-                    markerColor = Colors.green; // Color verde si está en rango listo para agitar
+                    markerColor = Colors.green;
                     markerIcon = Icons.location_on;
                   } else {
-                    markerColor = Colors.red; // Color rojo normal
+                    markerColor = Colors.red;
                     markerIcon = Icons.location_on;
                   }
 
@@ -330,7 +339,6 @@ class _UserMapViewState extends State<UserMapView> {
                   );
                 }).toList();
 
-                // 3. Ruta solo hacia tesoros pendientes
                 if (_showRoute && _currentPosition != null) {
                   routePoints = _calculateOptimizedRoute(uncollectedTreasures);
                 }
@@ -346,20 +354,17 @@ class _UserMapViewState extends State<UserMapView> {
                 children: [
                   TileLayer(urlTemplate: 'https://tile.openstreetmap.org/{z}/{x}/{y}.png', userAgentPackageName: 'com.geohunt.app'),
                   if (_showRoute && routePoints.isNotEmpty) PolylineLayer(polylines: [Polyline(points: routePoints, strokeWidth: 5, color: Colors.deepPurple)]),
-
-                  // Círculo Rojo solo si hay tesoro ENCONTRABLE cerca
                   if (_treasureInRange != null && _currentPosition != null)
                     CircleLayer(circles: [
                       CircleMarker(
                           point: LatLng(_treasureInRange!.location.latitude, _treasureInRange!.location.longitude),
                           radius: 15,
                           useRadiusInMeter: true,
-                          color: Colors.green.withOpacity(0.3), // Verde = Listo
+                          color: Colors.green.withOpacity(0.3),
                           borderColor: Colors.green,
                           borderStrokeWidth: 2
                       )
                     ]),
-
                   MarkerLayer(markers: markers),
                 ],
               );
@@ -389,7 +394,7 @@ class _UserMapViewState extends State<UserMapView> {
 }
 
 // ---------------------------------------------------------------------------
-// VISTA 2: TOP 10 LEADERBOARD (Filtrado solo usuarios)
+// VISTA 2: TOP 10 LEADERBOARD
 // ---------------------------------------------------------------------------
 class LeaderboardView extends StatelessWidget {
   const LeaderboardView({super.key});
@@ -427,7 +432,7 @@ class LeaderboardView extends StatelessWidget {
 }
 
 // ---------------------------------------------------------------------------
-// VISTA 3: PERFIL DE USUARIO (Editable)
+// VISTA 3: PERFIL DE USUARIO (OPTIMIZADO)
 // ---------------------------------------------------------------------------
 class UserProfileView extends StatefulWidget {
   final UserModel user;
@@ -440,11 +445,14 @@ class _UserProfileViewState extends State<UserProfileView> {
   late TextEditingController _phoneController;
   bool _isLoading = false;
   String? _currentImageUrl;
+
   @override
   void initState() { super.initState(); _usernameController = TextEditingController(text: widget.user.username); _phoneController = TextEditingController(text: widget.user.phoneNumber ?? ''); _currentImageUrl = widget.user.profileImageUrl; }
+
+  // OPTIMIZACIÓN DE IMAGEN DE PERFIL
   Future<void> _pickAndUploadImage(ImageSource source) async {
     final ImagePicker picker = ImagePicker();
-    final XFile? image = await picker.pickImage(source: source, imageQuality: 25, maxWidth: 300);
+    final XFile? image = await picker.pickImage(source: source, imageQuality: 60, maxWidth: 512);
     if (image == null) return;
     setState(()=>_isLoading=true);
     final ref = FirebaseStorage.instance.ref().child('profile_images').child('${widget.user.uid}.jpg');
@@ -453,30 +461,19 @@ class _UserProfileViewState extends State<UserProfileView> {
     await FirebaseFirestore.instance.collection('users').doc(widget.user.uid).update({'profileImageUrl': url});
     setState(()=>_isLoading=false);
   }
+
   Future<void> _updateProfile() async {
     await FirebaseFirestore.instance.collection('users').doc(widget.user.uid).update({'username': _usernameController.text, 'phoneNumber': _phoneController.text});
     if(mounted) ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Guardado')));
   }
+
   @override
   Widget build(BuildContext context) {
     return SingleChildScrollView(padding: const EdgeInsets.all(24), child: Column(children: [
       GestureDetector(onTap: () => showModalBottomSheet(context: context, builder: (ctx)=>Wrap(children: [ListTile(leading: const Icon(Icons.photo), title: const Text('Galería'), onTap: (){Navigator.pop(ctx); _pickAndUploadImage(ImageSource.gallery);}), ListTile(leading: const Icon(Icons.camera), title: const Text('Cámara'), onTap: (){Navigator.pop(ctx); _pickAndUploadImage(ImageSource.camera);})])), child: CircleAvatar(radius: 60, backgroundImage: _currentImageUrl!=null?NetworkImage(_currentImageUrl!):null, child: _currentImageUrl==null?const Icon(Icons.camera_alt):null)),
       const SizedBox(height: 20),
-
-      // --- ESTADÍSTICAS DEL JUGADOR ---
-      Card(
-        elevation: 4,
-        child: Padding(
-          padding: const EdgeInsets.all(16.0),
-          child: Row(mainAxisAlignment: MainAxisAlignment.spaceAround, children: [
-            Column(children: [const Text('Puntaje', style: TextStyle(color: Colors.grey)), Text('${widget.user.score}', style: const TextStyle(fontSize: 22, fontWeight: FontWeight.bold, color: Color(0xFF8992D7)))]),
-            Container(height: 30, width: 1, color: Colors.grey),
-            Column(children: [const Text('Tesoros', style: TextStyle(color: Colors.grey)), Text('${widget.user.foundTreasures?.length ?? 0}', style: const TextStyle(fontSize: 22, fontWeight: FontWeight.bold, color: Color(0xFF8992D7)))]),
-          ]),
-        ),
-      ),
+      Card(elevation: 4, child: Padding(padding: const EdgeInsets.all(16.0), child: Row(mainAxisAlignment: MainAxisAlignment.spaceAround, children: [Column(children: [const Text('Puntaje', style: TextStyle(color: Colors.grey)), Text('${widget.user.score}', style: const TextStyle(fontSize: 22, fontWeight: FontWeight.bold, color: Color(0xFF8992D7)))]), Container(height: 30, width: 1, color: Colors.grey), Column(children: [const Text('Tesoros', style: TextStyle(color: Colors.grey)), Text('${widget.user.foundTreasures?.length ?? 0}', style: const TextStyle(fontSize: 22, fontWeight: FontWeight.bold, color: Color(0xFF8992D7)))])]))),
       const SizedBox(height: 20),
-
       TextField(controller: _usernameController, decoration: const InputDecoration(labelText: 'Nombre')), const SizedBox(height: 10), TextField(controller: _phoneController, decoration: const InputDecoration(labelText: 'Teléfono')), const SizedBox(height: 20), ElevatedButton(onPressed: _updateProfile, child: const Text('Guardar'))
     ]));
   }
