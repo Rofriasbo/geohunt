@@ -4,12 +4,13 @@ class TreasureModel {
   final String id;
   final String title;
   final String description;
-  final GeoPoint location; // Coordenadas de Firestore
+  final GeoPoint location;
   final String difficulty;
   final String creatorUid;
   final bool isLimitedTime;
   final Timestamp? creationDate;
   final Timestamp? expiryDate;
+  final String? imageUrl; // NUEVO: URL de la imagen del tesoro
 
   TreasureModel({
     required this.id,
@@ -21,6 +22,7 @@ class TreasureModel {
     this.isLimitedTime = false,
     this.creationDate,
     this.expiryDate,
+    this.imageUrl, // NUEVO
   });
 
   factory TreasureModel.fromMap(Map<String, dynamic> data, String documentId) {
@@ -28,13 +30,15 @@ class TreasureModel {
       id: documentId,
       title: data['title'] ?? 'Tesoro sin título',
       description: data['description'] ?? 'Sin descripción',
-      // Aseguramos que se lea como GeoPoint
-      location: data['location'] as GeoPoint,
+      location: data['location'] is GeoPoint
+          ? data['location']
+          : const GeoPoint(21.5114, -104.8947),
       difficulty: data['difficulty'] ?? 'Medio',
       creatorUid: data['creatorUid'] ?? '',
       isLimitedTime: data['isLimitedTime'] ?? false,
       creationDate: data['creationDate'] as Timestamp?,
       expiryDate: data['expiryDate'] as Timestamp?,
+      imageUrl: data['imageUrl'] as String?, // NUEVO
     );
   }
 
@@ -48,6 +52,7 @@ class TreasureModel {
       'isLimitedTime': isLimitedTime,
       'creationDate': creationDate ?? Timestamp.now(),
       'expiryDate': expiryDate,
+      'imageUrl': imageUrl, // NUEVO
     };
   }
 }

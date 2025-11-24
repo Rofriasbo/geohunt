@@ -10,17 +10,14 @@
 
 ---
 
-## 🚀 Novedades de la Versión Actual (v2.1)
+## 🚀 Novedades de la Versión Actual (v2.2)
 
-Esta versión eleva la experiencia de juego con mecánicas interactivas y retroalimentación visual en tiempo real:
+Esta versión perfecciona la jugabilidad con ayudas visuales y optimización de rendimiento:
 
-* **👋 Mecánica "Shake to Claim":** Utiliza el acelerómetro del dispositivo. Cuando estás cerca de un tesoro (< 5m), ¡agita el teléfono para reclamarlo!
-* **🎨 Marcadores Dinámicos:** Los pines del mapa cambian de color según su estado:
-    * 🔴 **Rojo:** Tesoro disponible (lejos).
-    * 🟢 **Verde:** En rango (¡Agita ahora!).
-    * 🔘 **Gris:** Tesoro ya encontrado (Bloqueado).
-* **🖼️ Perfiles Completos:** Gestión de avatar con cámara/galería tanto para Admins como para Usuarios.
-* **📍 Ruta Inteligente Filtrada:** El algoritmo de ruta ahora ignora automáticamente los tesoros que ya has encontrado.
+* **📸 Pistas Visuales:** Los administradores ahora pueden adjuntar **fotos del lugar real** a los tesoros de dificultad *Fácil* y *Media* para ayudar a los exploradores.
+* **⚡ Optimización de Imágenes:** Algoritmo de compresión inteligente que reduce el peso de las fotos (Avatars y Pistas) en un **90%** sin perder calidad visual, ahorrando datos y almacenamiento.
+* **👋 Mecánica "Shake to Claim":** Sistema de detección de movimiento para reclamar tesoros al estar en rango (< 5m).
+* **🎨 Marcadores Dinámicos:** Feedback visual en el mapa (Rojo/Verde/Gris) según el estado del tesoro.
 
 ---
 
@@ -31,9 +28,10 @@ La aplicación adapta su interfaz y lógica de juego según el perfil del usuari
 | Característica | 🕵️‍♂️ Explorador (Usuario) | 👑 Administrador (Admin) |
 | :--- | :---: | :---: |
 | **Login** | Email / Contraseña | **Google Sign-In** / Email |
-| **Objetivo Principal** | Cazar y Acumular Puntos | Crear y Gestionar el Mundo |
-| **Mapa** | Ver, Navegar y **Reclamar (Shake)** | Ver, Crear, Editar y Borrar (CRUD) |
-| **Rutas** | Ruta inteligente hacia tesoros pendientes | Trazado de rutas de prueba |
+| **Objetivo** | Cazar y Acumular Puntos | Crear y Gestionar el Mundo |
+| **Mapa** | Ver, Navegar y Reclamar | CRUD Completo de Tesoros |
+| **Pistas** | **Ver Foto del Lugar** (Si existe) | **Subir Foto** (Cámara/Galería) |
+| **Rutas** | Ruta inteligente hacia pendientes | Trazado de rutas de prueba |
 | **Perfil** | Edición, Foto y Estadísticas | Edición completa y Gestión |
 | **Ranking** | Acceso al **Top 10 Global** | Visualización (sin participar) |
 
@@ -44,15 +42,15 @@ La aplicación adapta su interfaz y lógica de juego según el perfil del usuari
 GeoHunt combina sensores de hardware con lógica de nube en tiempo real:
 
 ### 1. Sistema de Reclamo (Proximidad + Sensores)
-* **Geofencing Local:** La app calcula la distancia (`latlong2`) en cada actualización del GPS.
-* **Estado de Alerta:** Si la distancia es `< 5 metros`, el marcador se vuelve verde y se activa el listener del acelerómetro (`sensors_plus`).
-* **Detección de Gesto:** Se monitorea la fuerza G. Si se detecta una aceleración brusca (> 15 m/s²), se dispara el evento de captura.
+* **Geofencing Local:** Cálculo de distancia geodésica (`latlong2`) en tiempo real.
+* **Estado de Alerta:** Al entrar en el radio de **5 metros**, el marcador cambia a verde.
+* **Detección de Gesto:** Monitoreo del acelerómetro (`sensors_plus`) para detectar el "Shake" (> 15 m/s²).
 
 ### 2. Smart Route (Algoritmo Greedy)
-El trazado de ruta se recalcula dinámicamente:
-1.  Filtra los tesoros `foundTreasures` del usuario.
-2.  Selecciona los restantes en un radio de **200 metros**.
-3.  Conecta los puntos usando la lógica del *Vecino Más Cercano* para optimizar la caminata.
+* **Lógica:** Filtra tesoros ya encontrados y traza la ruta óptima entre los restantes (radio 200m) usando el algoritmo del *Vecino Más Cercano*.
+
+### 3. Compresión de Medios
+* **Lógica:** Antes de subir a Firebase Storage, las imágenes se redimensionan (máx 1024px para tesoros, 512px para perfiles) y se comprimen (calidad 60-70%), garantizando cargas rápidas.
 
 ---
 
@@ -66,8 +64,8 @@ Arquitectura escalable basada en **Flutter** y servicios en la nube.
 | :--- | :--- |
 | `flutter_map` | Renderizado de mapas OpenStreetMap (Sin costos de API). |
 | `geolocator` | Rastreo de posición GPS en tiempo real. |
-| `sensors_plus` | **Acceso al Acelerómetro** para la mecánica de Shake. |
-| `image_picker` | Acceso nativo a la Cámara y Galería. |
+| `sensors_plus` | Acceso al Acelerómetro para la mecánica de juego. |
+| `image_picker` | Selección de fotos (Cámara/Galería) con parámetros de calidad. |
 | `permission_handler`| Gestión segura de permisos de Android. |
 | ´flutter_local_notifications´ | Manejo de notificaciones locales. |
 
@@ -82,19 +80,23 @@ Arquitectura escalable basada en **Flutter** y servicios en la nube.
 
 ---
 
+## 🚨 Sistema de notificaciones locales y push
+- Cuando un usuario se encuentra a cinco metros de un tesoro sin reclamar, automáticamente le llega una notificación
+  indicando que realice el gesto de "agitar" (shake) el celular, para así, obtener su recompensa.
+- Al crearse un punto que se encuentra a un rango de un kilómetro del usuario, llegará una notificación para que
+  vaya a reclamar dicho punto mientras está disponible.
+
 ## ⚙️ Requisitos e Instalación
 
 ### Permisos de Android (`AndroidManifest.xml`)
-Para que la experiencia de juego sea completa, se requieren los siguientes permisos:
-
-* 🛰️ **Ubicación:** `ACCESS_FINE_LOCATION` (Vital para detectar los 5 metros).
-* 📸 **Multimedia:** `READ_MEDIA_IMAGES` / `CAMERA` (Para el perfil).
+* 🛰️ **Ubicación:** `ACCESS_FINE_LOCATION` (Vital para el juego).
+* 📸 **Multimedia:** `READ_MEDIA_IMAGES` / `CAMERA` (Perfiles y Pistas).
 * 🌐 **Red:** `INTERNET`.
 
 ### Requisitos de Hardware
 * Dispositivo Android (SDK Min 21).
 * **GPS Funcional** (Alta precisión).
-* **Acelerómetro** (Indispensable para reclamar tesoros).
+* **Acelerómetro** (Indispensable para reclamar).
 
 ---
 
@@ -103,20 +105,14 @@ Para que la experiencia de juego sea completa, se requieren los siguientes permi
 ```text
 lib/
 ├── models/
-│   ├── users.dart        # Modelo de Explorador (con Score e Historial)
-│   ├── admin_model.dart  # Modelo de Administrador
-│   └── tesoro.dart       # Modelo de Tesoro (GeoPoint, Dificultad)
+│   ├── users.dart        # Modelo de Explorador
+│   ├── admin_model.dart  # Modelo de Administrador (Permisos)
+│   └── tesoro.dart       # Modelo de Tesoro (GeoPoint, ImageUrl)
 ├── screens/
 │   ├── login.dart        # Router de Roles
-│   ├── admin.dart        # Dashboard Admin (CRUD + Mapa)
-│   └── pagina.dart       # Interfaz de Juego (Mapa + Shake + Ranking)
+│   ├── admin.dart        # Dashboard: Mapa CRUD, Fotos, Usuarios
+│   └── pagina.dart       # Juego: Mapa, Shake, Ranking, Pistas
 ├── services/
 │   ├── base.dart         # Lógica de Firestore
 │   └── registro_google.dart # Autenticación federada
 └── main.dart             # Inicialización
-
-## 🚨 Sistema de notificaciones locales y push
-- Cuando un usuario se encuentra a cinco metros de un tesoro sin reclamar, automáticamente le llega una notificación
-indicando que realice el gesto de "agitar" (shake) el celular, para así, obtener su recompensa.
-- Al crearse un punto que se encuentra a un rango de un kilómetro del usuario, llegará una notificación para que 
-vaya a reclamar dicho punto mientras está disponible.

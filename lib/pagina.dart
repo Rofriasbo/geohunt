@@ -1,6 +1,6 @@
 import 'dart:async';
 import 'dart:io';
-import 'dart:math'; // Para calcular la fuerza del Shake
+import 'dart:math'; // Para Shake
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
@@ -14,6 +14,7 @@ import 'package:sensors_plus/sensors_plus.dart'; // IMPORTANTE: Sensores
 import 'package:vibration/vibration.dart';
 import 'database_service.dart';
 import 'fcm_service.dart';
+import 'package:sensors_plus/sensors_plus.dart';
 import 'login.dart';
 import 'notificaciones.dart';
 import 'modelos/user.dart';
@@ -148,7 +149,7 @@ class _WelcomeScreenState extends State<WelcomeScreen> {
 }
 
 // ---------------------------------------------------------------------------
-// VISTA 1: MAPA DEL USUARIO (CON LÓGICA DE COLORES)
+// VISTA 1: MAPA DEL USUARIO (Visualización de Tesoros + Fotos)
 // ---------------------------------------------------------------------------
 class UserMapView extends StatefulWidget {
   final UserModel user;
@@ -328,19 +329,40 @@ class _UserMapViewState extends State<UserMapView> {
     return path;
   }
 
+  // DETALLES CON IMAGEN DE PISTA
   void _showTreasureDetails(TreasureModel t, bool isFound) {
-    showDialog(context: context, builder: (ctx) => AlertDialog(
-      title: Text(t.title),
-      content: Column(mainAxisSize: MainAxisSize.min, crossAxisAlignment: CrossAxisAlignment.start, children: [
-        Text(t.description),
-        const SizedBox(height: 10),
-        if (isFound)
-          const Chip(label: Text("YA ENCONTRADO"), backgroundColor: Colors.grey, labelStyle: TextStyle(color: Colors.white))
-        else
-          Chip(label: Text(t.difficulty), backgroundColor: t.difficulty == 'Difícil' ? Colors.red[100] : Colors.green[100]),
-      ]),
-      actions: [TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('Cerrar'))],
-    ));
+    showDialog(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: Text(t.title),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            // IMAGEN SI EXISTE
+            if (t.imageUrl != null && t.imageUrl!.isNotEmpty)
+              Padding(
+                padding: const EdgeInsets.only(bottom: 10),
+                child: ClipRRect(
+                  borderRadius: BorderRadius.circular(8),
+                  child: Image.network(t.imageUrl!, height: 150, width: double.infinity, fit: BoxFit.cover),
+                ),
+              ),
+
+            Text(t.description),
+            const SizedBox(height: 10),
+
+            if (isFound)
+              const Chip(label: Text("YA ENCONTRADO"), backgroundColor: Colors.grey, labelStyle: TextStyle(color: Colors.white))
+            else
+              Chip(label: Text(t.difficulty), backgroundColor: t.difficulty == 'Difícil' ? Colors.red[100] : Colors.green[100]),
+
+            if (t.isLimitedTime) const Chip(label: Text('¡Tiempo Limitado!'), backgroundColor: Colors.orangeAccent),
+          ],
+        ),
+        actions: [TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('Cerrar'))],
+      ),
+    );
   }
 
   Future<void> _vibratePhone() async {
@@ -539,7 +561,6 @@ class _UserMapViewState extends State<UserMapView> {
             },
           ),
 
-          // Tu widget Positioned no necesita cambiar
           if (_treasureInRange != null)
             Positioned(
               top: 50, left: 20, right: 20,
@@ -572,7 +593,7 @@ class _UserMapViewState extends State<UserMapView> {
 }
 
 // ---------------------------------------------------------------------------
-// VISTA 2: TOP 10 LEADERBOARD (Filtrado solo usuarios)
+// VISTA 2: TOP 10 LEADERBOARD
 // ---------------------------------------------------------------------------
 class LeaderboardView extends StatelessWidget {
   const LeaderboardView({super.key});
@@ -610,7 +631,7 @@ class LeaderboardView extends StatelessWidget {
 }
 
 // ---------------------------------------------------------------------------
-// VISTA 3: PERFIL DE USUARIO (Editable)
+// VISTA 3: PERFIL DE USUARIO (OPTIMIZADO)
 // ---------------------------------------------------------------------------
 class UserProfileView extends StatefulWidget {
   final UserModel user;
@@ -623,11 +644,14 @@ class _UserProfileViewState extends State<UserProfileView> {
   late TextEditingController _phoneController;
   bool _isLoading = false;
   String? _currentImageUrl;
+
   @override
   void initState() { super.initState(); _usernameController = TextEditingController(text: widget.user.username); _phoneController = TextEditingController(text: widget.user.phoneNumber ?? ''); _currentImageUrl = widget.user.profileImageUrl; }
+
+  // OPTIMIZACIÓN DE IMAGEN DE PERFIL
   Future<void> _pickAndUploadImage(ImageSource source) async {
     final ImagePicker picker = ImagePicker();
-    final XFile? image = await picker.pickImage(source: source, imageQuality: 25, maxWidth: 300);
+    final XFile? image = await picker.pickImage(source: source, imageQuality: 60, maxWidth: 512);
     if (image == null) return;
     setState(()=>_isLoading=true);
     final ref = FirebaseStorage.instance.ref().child('profile_images').child('${widget.user.uid}.jpg');
@@ -636,30 +660,19 @@ class _UserProfileViewState extends State<UserProfileView> {
     await FirebaseFirestore.instance.collection('users').doc(widget.user.uid).update({'profileImageUrl': url});
     setState(()=>_isLoading=false);
   }
+
   Future<void> _updateProfile() async {
     await FirebaseFirestore.instance.collection('users').doc(widget.user.uid).update({'username': _usernameController.text, 'phoneNumber': _phoneController.text});
     if(mounted) ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Guardado')));
   }
+
   @override
   Widget build(BuildContext context) {
     return SingleChildScrollView(padding: const EdgeInsets.all(24), child: Column(children: [
       GestureDetector(onTap: () => showModalBottomSheet(context: context, builder: (ctx)=>Wrap(children: [ListTile(leading: const Icon(Icons.photo), title: const Text('Galería'), onTap: (){Navigator.pop(ctx); _pickAndUploadImage(ImageSource.gallery);}), ListTile(leading: const Icon(Icons.camera), title: const Text('Cámara'), onTap: (){Navigator.pop(ctx); _pickAndUploadImage(ImageSource.camera);})])), child: CircleAvatar(radius: 60, backgroundImage: _currentImageUrl!=null?NetworkImage(_currentImageUrl!):null, child: _currentImageUrl==null?const Icon(Icons.camera_alt):null)),
       const SizedBox(height: 20),
-
-      // --- ESTADÍSTICAS DEL JUGADOR ---
-      Card(
-        elevation: 4,
-        child: Padding(
-          padding: const EdgeInsets.all(16.0),
-          child: Row(mainAxisAlignment: MainAxisAlignment.spaceAround, children: [
-            Column(children: [const Text('Puntaje', style: TextStyle(color: Colors.grey)), Text('${widget.user.score}', style: const TextStyle(fontSize: 22, fontWeight: FontWeight.bold, color: Color(0xFF8992D7)))]),
-            Container(height: 30, width: 1, color: Colors.grey),
-            Column(children: [const Text('Tesoros', style: TextStyle(color: Colors.grey)), Text('${widget.user.foundTreasures?.length ?? 0}', style: const TextStyle(fontSize: 22, fontWeight: FontWeight.bold, color: Color(0xFF8992D7)))]),
-          ]),
-        ),
-      ),
+      Card(elevation: 4, child: Padding(padding: const EdgeInsets.all(16.0), child: Row(mainAxisAlignment: MainAxisAlignment.spaceAround, children: [Column(children: [const Text('Puntaje', style: TextStyle(color: Colors.grey)), Text('${widget.user.score}', style: const TextStyle(fontSize: 22, fontWeight: FontWeight.bold, color: Color(0xFF8992D7)))]), Container(height: 30, width: 1, color: Colors.grey), Column(children: [const Text('Tesoros', style: TextStyle(color: Colors.grey)), Text('${widget.user.foundTreasures?.length ?? 0}', style: const TextStyle(fontSize: 22, fontWeight: FontWeight.bold, color: Color(0xFF8992D7)))])]))),
       const SizedBox(height: 20),
-
       TextField(controller: _usernameController, decoration: const InputDecoration(labelText: 'Nombre')), const SizedBox(height: 10), TextField(controller: _phoneController, decoration: const InputDecoration(labelText: 'Teléfono')), const SizedBox(height: 20), ElevatedButton(onPressed: _updateProfile, child: const Text('Guardar'))
     ]));
   }
