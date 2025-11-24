@@ -9,8 +9,8 @@ import 'package:flutter_map/flutter_map.dart';
 import 'package:latlong2/latlong.dart';
 import 'package:geolocator/geolocator.dart';
 import 'dart:async';
-import 'tesoro.dart';
-import 'admin_model.dart';
+import 'modelos/tesoro.dart';
+import 'modelos/admin_model.dart';
 import 'login.dart';
 
 class AdminScreen extends StatefulWidget {

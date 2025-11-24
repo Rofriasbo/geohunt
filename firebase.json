@@ -1,1 +1,35 @@
-{"flutter":{"platforms":{"android":{"default":{"projectId":"geohunt-01","appId":"1:17313293524:android:0f9f09a26122dc3852c741","fileOutput":"android/app/google-services.json"}},"dart":{"lib/firebase_options.dart":{"projectId":"geohunt-01","configurations":{"android":"1:17313293524:android:0f9f09a26122dc3852c741"}}}}}}
+{
+  "flutter": {
+    "platforms": {
+      "android": {
+        "default": {
+          "projectId": "geohunt-01",
+          "appId": "1:17313293524:android:0f9f09a26122dc3852c741",
+          "fileOutput": "android/app/google-services.json"
+        }
+      },
+      "dart": {
+        "lib/firebase_options.dart": {
+          "projectId": "geohunt-01",
+          "configurations": {
+            "android": "1:17313293524:android:0f9f09a26122dc3852c741"
+          }
+        }
+      }
+    }
+  },
+  "functions": [
+    {
+      "codebase": "default",
+      "disallowLegacyRuntimeConfig": true,
+      "ignore": [
+        "node_modules",
+        ".git",
+        "firebase-debug.log",
+        "firebase-debug.*.log",
+        "*.local"
+      ],
+      "source": "functions"
+    }
+  ]
+}

@@ -69,6 +69,7 @@ Arquitectura escalable basada en **Flutter** y servicios en la nube.
 | `sensors_plus` | **Acceso al Acelerómetro** para la mecánica de Shake. |
 | `image_picker` | Acceso nativo a la Cámara y Galería. |
 | `permission_handler`| Gestión segura de permisos de Android. |
+| ´flutter_local_notifications´ | Manejo de notificaciones locales. |
 
 ### 🔥 Backend (Firebase)
 
@@ -77,6 +78,7 @@ Arquitectura escalable basada en **Flutter** y servicios en la nube.
 | **Authentication** | Login tradicional y Google Sign-In con validación SHA-1. |
 | **Firestore BD** | Base de datos NoSQL. Índices compuestos para Leaderboards. |
 | **Storage** | Almacenamiento de imágenes de perfil optimizadas. |
+| **Messaging** | Envío de notificaciones push dinámicamente al usuario. |
 
 ---
 
@@ -112,3 +114,9 @@ lib/
 │   ├── base.dart         # Lógica de Firestore
 │   └── registro_google.dart # Autenticación federada
 └── main.dart             # Inicialización
+
+## 🚨 Sistema de notificaciones locales y push
+- Cuando un usuario se encuentra a cinco metros de un tesoro sin reclamar, automáticamente le llega una notificación
+indicando que realice el gesto de "agitar" (shake) el celular, para así, obtener su recompensa.
+- Al crearse un punto que se encuentra a un rango de un kilómetro del usuario, llegará una notificación para que 
+vaya a reclamar dicho punto mientras está disponible.

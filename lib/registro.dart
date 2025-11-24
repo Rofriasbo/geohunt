@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'user.dart'; // CORREGIDO: Importa el archivo correcto (plural)
+import 'modelos/user.dart'; // CORREGIDO: Importa el archivo correcto (plural)
 
 class Registro extends StatefulWidget {
   const Registro({super.key});

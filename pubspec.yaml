@@ -38,7 +38,7 @@ dependencies:
   firebase_core: ^3.1.0
   firebase_auth: ^5.1.0
   cloud_firestore: ^5.0.2
-  firebase_messaging: ^15.0.2
+  firebase_messaging: ^15.2.10
   firebase_storage: ^12.0.0  # <--- CAMBIO IMPORTANTE (De 11.6.0 a 12.0.0)
 
     # OTRAS
@@ -50,6 +50,7 @@ dependencies:
   permission_handler: ^11.3.0
   sensors_plus: ^5.0.1  # Para detectar el agitado
   flutter_local_notifications: ^19.5.0
+  vibration: ^3.1.4
 
 dev_dependencies:
   flutter_test:

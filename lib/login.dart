@@ -4,8 +4,8 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'registro.dart';
 import 'pagina.dart';
 import 'admin.dart';
-import 'user.dart';
-import 'admin_model.dart'; // IMPORTANTE
+import 'modelos/user.dart';
+import 'modelos/admin_model.dart'; // IMPORTANTE
 import 'registro_google.dart';
 
 class Login extends StatefulWidget {
