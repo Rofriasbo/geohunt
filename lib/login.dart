@@ -5,7 +5,7 @@ import 'registro.dart';
 import 'pagina.dart';
 import 'admin.dart';
 import 'user.dart';
-import 'admin_model.dart'; // IMPORTANTE
+import 'admin_model.dart'; // IMPORTANTE: Para mapear el admin
 import 'registro_google.dart';
 
 class Login extends StatefulWidget {
@@ -41,39 +41,49 @@ class _LoginState extends State<Login> {
     }
 
     try {
+      // 1. Autenticación con Firebase Auth
       UserCredential userCredential = await _auth.signInWithEmailAndPassword(
         email: email,
         password: password,
       );
 
       final String uid = userCredential.user!.uid;
+
+      // 2. Obtener documento de Firestore
       final docSnapshot = await _firestore.collection('users').doc(uid).get();
 
       if (docSnapshot.exists && docSnapshot.data() != null) {
         final data = docSnapshot.data() as Map<String, dynamic>;
-        final String role = data['role'] ?? 'user';
+        final String role = data['role'] ?? 'user'; // Por defecto user si no tiene rol
 
         if (mounted) {
-          // --- LÓGICA CORREGIDA ---
+          // 3. Redirección basada en el Rol
           if (role == 'admin') {
-            // Convertimos a AdminModel
+            // Es Admin: Usamos AdminModel y vamos a AdminScreen
             AdminModel admin = AdminModel.fromMap(data, docSnapshot.id);
-
-            // Navegamos usando el parámetro correcto 'adminUser'
             Navigator.of(context).pushReplacement(
               MaterialPageRoute(builder: (context) => AdminScreen(adminUser: admin)),
             );
           } else {
-            // Convertimos a UserModel
+            // Es Usuario: Usamos UserModel y vamos a WelcomeScreen
             UserModel user = UserModel.fromMap(data, docSnapshot.id);
             Navigator.of(context).pushReplacement(
               MaterialPageRoute(builder: (context) => WelcomeScreen(username: user.username)),
             );
           }
         }
+      } else {
+        // Caso raro: Usuario existe en Auth pero no tiene datos en Firestore
+        if (mounted) ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Error: Usuario sin perfil en base de datos.')));
       }
+    } on FirebaseAuthException catch (e) {
+      String msg = 'Error de autenticación';
+      if (e.code == 'user-not-found') msg = 'Usuario no encontrado';
+      else if (e.code == 'wrong-password') msg = 'Contraseña incorrecta';
+
+      if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(msg)));
     } catch (e) {
-      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Error: $e')));
+      if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Error: $e')));
     }
   }
 
@@ -100,6 +110,7 @@ class _LoginState extends State<Login> {
                 child: const Text('Iniciar Sesión', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Colors.white)),
               ),
               const SizedBox(height: 20),
+              // Botón de Google (También maneja roles internamente)
               const GoogleLoginButton(),
               const SizedBox(height: 20),
               TextButton(
