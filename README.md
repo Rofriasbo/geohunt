@@ -109,10 +109,12 @@ lib/
 │   ├── admin_model.dart  # Modelo de Administrador (Permisos)
 │   └── tesoro.dart       # Modelo de Tesoro (GeoPoint, ImageUrl)
 ├── screens/
-│   ├── login.dart        # Router de Roles
+│   ├── login.dart        # Inicio de sesión de usuarios
 │   ├── admin.dart        # Dashboard: Mapa CRUD, Fotos, Usuarios
+│   ├── registro.dart     # Registro de usuarios
 │   └── pagina.dart       # Juego: Mapa, Shake, Ranking, Pistas
 ├── services/
-│   ├── base.dart         # Lógica de Firestore
-│   └── registro_google.dart # Autenticación federada
-└── main.dart             # Inicialización
+│   ├── database_service.dart   # Lógica de Firestore
+│   ├── fcm_service.dart        # Lógica para generar el Firbase Cloud Messaging Token 
+│   └── registro_google.dart    # Autenticación federada
+└── main.dart                   # Inicialización

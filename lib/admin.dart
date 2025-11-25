@@ -10,9 +10,9 @@ import 'package:permission_handler/permission_handler.dart';
 import 'package:flutter_map/flutter_map.dart';
 import 'package:latlong2/latlong.dart';
 import 'package:geolocator/geolocator.dart';
-import 'modelos/tesoro.dart';
-import 'modelos/admin_model.dart';
-import 'modelos/user.dart';
+import 'tesoro.dart';
+import 'admin_model.dart';
+import 'user.dart';
 import 'login.dart';
 
 class AdminScreen extends StatefulWidget {

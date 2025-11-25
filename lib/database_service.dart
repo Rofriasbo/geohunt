@@ -1,7 +1,7 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'modelos/user.dart';
-import 'modelos/admin_model.dart'; // Importamos el nuevo modelo
-import 'modelos/tesoro.dart';
+import 'user.dart';
+import 'admin_model.dart';
+import 'tesoro.dart';
 
 class DatabaseService {
   final FirebaseFirestore _db = FirebaseFirestore.instance;

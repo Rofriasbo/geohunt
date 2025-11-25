@@ -78,7 +78,7 @@ exports.notifyNearbyUsersOnTreasureCreation = functions.firestore
   console.log(`✅ Distancia con ${userDoc.id}: ${distance}m`);
   
 
-        if (distance <= 500 && user.fcmToken) {
+        if (distance <= 100 && user.fcmToken) {
           notifications.push({
             token: user.fcmToken,
             notification: {

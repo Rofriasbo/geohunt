@@ -17,8 +17,8 @@ import 'fcm_service.dart';
 import 'package:sensors_plus/sensors_plus.dart';
 import 'login.dart';
 import 'notificaciones.dart';
-import 'modelos/user.dart';
-import 'modelos/tesoro.dart';
+import 'user.dart';
+import 'tesoro.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 
 class WelcomeScreen extends StatefulWidget {
