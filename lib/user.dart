@@ -9,6 +9,8 @@ class UserModel {
   final String? phoneNumber;
   final String? profileImageUrl; // NUEVO: Foto de perfil
   final String role;
+  final String? fcmToken;
+  final GeoPoint? lastKnownLocation;
 
   UserModel({
     required this.uid,
@@ -19,6 +21,8 @@ class UserModel {
     this.phoneNumber,
     this.profileImageUrl, // NUEVO
     this.role = 'user',
+    this.fcmToken,
+    this.lastKnownLocation
   });
 
   factory UserModel.fromMap(Map<String, dynamic> data, String documentId) {
@@ -35,6 +39,8 @@ class UserModel {
       phoneNumber: data['phoneNumber'] as String?,
       profileImageUrl: data['profileImageUrl'] as String?, // Leemos la imagen
       role: data['role'] ?? 'user',
+      fcmToken: data['fcmToken'] as String?,
+      lastKnownLocation: data['lastKnownLocation'] as GeoPoint?,
     );
   }
 
@@ -47,6 +53,8 @@ class UserModel {
       'phoneNumber': phoneNumber,
       'profileImageUrl': profileImageUrl, // Guardamos la imagen
       'role': role,
+      'fcmToken': fcmToken,
+      'lastKnownLocation': lastKnownLocation
     };
   }
 }

@@ -10,10 +10,16 @@ import 'package:permission_handler/permission_handler.dart';
 import 'package:flutter_map/flutter_map.dart';
 import 'package:latlong2/latlong.dart';
 import 'package:geolocator/geolocator.dart';
+import 'package:sensors_plus/sensors_plus.dart'; // IMPORTANTE: Sensores
+import 'package:vibration/vibration.dart';
+import 'database_service.dart';
+import 'fcm_service.dart';
 import 'package:sensors_plus/sensors_plus.dart';
 import 'login.dart';
+import 'notificaciones.dart';
 import 'user.dart';
 import 'tesoro.dart';
+import 'package:firebase_messaging/firebase_messaging.dart';
 
 class WelcomeScreen extends StatefulWidget {
   final String username;
@@ -31,8 +37,79 @@ class _WelcomeScreenState extends State<WelcomeScreen> {
   static const Color backgroundColor = Color(0xFF97AAA6);
   static const Color secondaryColor = Color(0xFF8992D7);
 
+  Future<void> saveFCMTokenAndLocation(String uid) async {
+    final DatabaseService dbService = DatabaseService();
+
+    String? token = await FirebaseMessaging.instance.getToken();
+    if (token != null) {
+      await dbService.updateUser(uid, {
+        'fcmToken': token,
+      });
+    }
+     Position position = await Geolocator.getCurrentPosition();
+  GeoPoint location = GeoPoint(position.latitude, position.longitude);
+  await dbService.updateUser(uid, {
+    'lastKnownLocation': location,
+  });
+
+  }
+
+  void _initFCMListeners() {
+
+    FirebaseMessaging.onMessage.listen((RemoteMessage message) {
+      print("🔔 Notificación recibida en Primer Plano: ${message.data}");
+
+      String titulo = message.notification?.title ?? 'Alerta GeoHunt';
+      String cuerpo = message.notification?.body ?? '¡Hay un tesoro cerca!';
+
+
+      bool isLimited = message.data['isLimitedTime'] == 'true';
+
+
+      DateTime? fechaLimite;
+
+      if (message.data.containsKey('limitedUntil')) {
+        try {
+          int millis = int.parse(message.data['limitedUntil']);
+          fechaLimite = DateTime.fromMillisecondsSinceEpoch(millis);
+          print("⏳ Fecha límite detectada: $fechaLimite");
+        } catch (e) {
+          print("⚠️ Error parseando fecha limite: $e");
+        }
+      }
+      mostrarNotificacion(
+          titulo,
+          cuerpo,
+          'tesoro',
+          fechaLimite: fechaLimite
+      );
+    });
+
+
+    FirebaseMessaging.onMessageOpenedApp.listen((RemoteMessage message) {
+      print('👆 Usuario tocó la notificación (Background)');
+      // Aquí puedes agregar lógica para navegar al mapa y centrar el tesoro
+    });
+
+
+    FirebaseMessaging.instance.getInitialMessage().then((RemoteMessage? message) {
+      if (message != null) {
+        print('App iniciada desde notificación (Terminated): ${message.data}');
+      }
+    });
+  }
+
   void _onItemTapped(int index) {
     setState(() { _selectedIndex = index; });
+  }
+  final FCMService _fcmService = FCMService();
+
+  @override
+  void initState() {
+    super.initState();
+    _fcmService.setupFCMToken(_currentUid);
+    _fcmService.initForegroundNotifications();
+    _initFCMListeners();
   }
 
   @override
@@ -100,13 +177,15 @@ class _UserMapViewState extends State<UserMapView> {
   final LatLng _tepicCenter = const LatLng(21.5114, -104.8947);
   final MapController _mapController = MapController();
   final Distance _distanceCalculator = const Distance();
+  final DatabaseService _dbService = DatabaseService();
 
   bool _showRoute = false;
   LatLng? _currentPosition;
 
   StreamSubscription<Position>? _positionStream;
   StreamSubscription? _accelerometerSubscription;
-
+  StreamSubscription<QuerySnapshot>? _treasuresSubscription; // Para escuchar los tesoros
+  List<TreasureModel> _allTreasures = []; // Guardamos los tesoros aquí
   TreasureModel? _treasureInRange;
   bool _isClaiming = false;
 
@@ -115,6 +194,7 @@ class _UserMapViewState extends State<UserMapView> {
     super.initState();
     _checkLocationPermissions();
     _initSensor();
+    _listenToTreasures();
   }
 
   @override
@@ -124,6 +204,17 @@ class _UserMapViewState extends State<UserMapView> {
     super.dispose();
   }
 
+  void _listenToTreasures() {
+    _treasuresSubscription = FirebaseFirestore.instance.collection('treasures').snapshots().listen((snapshot) {
+      if (mounted) {
+        setState(() {
+          _allTreasures = snapshot.docs.map((d) => TreasureModel.fromMap(d.data() as Map<String, dynamic>, d.id)).toList();
+        });
+      }
+    });
+  }
+
+  // --- 1. SENSOR SHAKE ---
   void _initSensor() {
     _accelerometerSubscription = userAccelerometerEvents.listen((UserAccelerometerEvent event) {
       double acceleration = sqrt(event.x * event.x + event.y * event.y + event.z * event.z);
@@ -134,33 +225,69 @@ class _UserMapViewState extends State<UserMapView> {
   }
 
   void _onShakeDetected() {
+    // Solo reclamar si hay uno en rango y no se está procesando ya
     if (_treasureInRange != null && !_isClaiming) {
       _claimTreasure(_treasureInRange!);
     }
   }
 
+  // --- 2. RECLAMAR TESORO ---
   Future<void> _claimTreasure(TreasureModel treasure) async {
-    setState(() { _isClaiming = true; });
-
-    int pointsToAdd = 0;
-    switch (treasure.difficulty) {
-      case 'Fácil': pointsToAdd = 100; break;
-      case 'Medio': pointsToAdd = 300; break;
-      case 'Difícil': pointsToAdd = 500; break;
-      default: pointsToAdd = 100;
-    }
-    if (treasure.isLimitedTime) pointsToAdd += 200;
-
+    setState(() {
+      _isClaiming = true;
+    });
     try {
-      WriteBatch batch = FirebaseFirestore.instance.batch();
-      DocumentReference userRef = FirebaseFirestore.instance.collection('users').doc(widget.user.uid);
+      // Referencias
+      final userRef = FirebaseFirestore.instance.collection('users').doc(widget.user.uid);
+      final treasureRef = FirebaseFirestore.instance.collection('treasures').doc(treasure.id);
 
-      batch.update(userRef, {
-        'score': FieldValue.increment(pointsToAdd),
-        'foundTreasures': FieldValue.arrayUnion([treasure.id])
+      // Esto asegura que la operación sea atómica y verifique el estado real del servidor
+      int pointsAwarded = await FirebaseFirestore.instance.runTransaction((transaction) async {
+
+        DocumentSnapshot snapshot = await transaction.get(treasureRef);
+
+        if (!snapshot.exists) {
+          throw Exception("Este tesoro ya no existe (fue eliminado o expiró).");
+        }
+
+        // En lugar de leer campo por campo manualmente, usamos tu factory 'fromMap'.
+        // Esto convierte automáticamente los Timestamps a DateTime gracias a tu modelo.
+        final freshTreasure = TreasureModel.fromMap(
+            snapshot.data() as Map<String, dynamic>,
+            snapshot.id
+        );
+
+        int pointsToAdd = 0;
+    switch (freshTreasure.difficulty) {
+      case 'Fácil':
+        pointsToAdd = 100;
+        break;
+      case 'Medio':
+        pointsToAdd = 300;
+        break;
+      case 'Difícil':
+        pointsToAdd = 500;
+        break;
+      default:
+        pointsToAdd = 100;
+    }
+
+        // Lógica de Tiempo Límite (Usando el DateTime ya convertido del modelo)
+        if (freshTreasure.isLimitedTime && freshTreasure.limitedUntil != null) {
+          // Comparamos DateTime con DateTime (fácil y limpio)
+          if (DateTime.now().isBefore(freshTreasure.limitedUntil!)) {
+            pointsToAdd += 200;
+          }
+        }
+
+        // Actualizamos Usuario
+        transaction.update(userRef, {
+          'score': FieldValue.increment(pointsToAdd),
+          'foundTreasures': FieldValue.arrayUnion([freshTreasure.id]),
+        });
+
+        return pointsToAdd;
       });
-
-      await batch.commit();
 
       if (mounted) {
         showDialog(
@@ -172,27 +299,49 @@ class _UserMapViewState extends State<UserMapView> {
               children: [
                 const Icon(Icons.verified, color: Colors.green, size: 60),
                 const SizedBox(height: 10),
-                Text('Has ganado $pointsToAdd puntos.'),
+                Text('Has ganado $pointsAwarded puntos.'), // Usamos la variable retornada
                 Text('Tesoro: ${treasure.title}'),
+                // Nota: Aquí podrías simplificar el mensaje ya que la lógica fue interna
               ],
             ),
-            actions: [TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('¡Genial!'))],
+            actions: [
+              TextButton(
+                onPressed: () {
+                  Navigator.pop(ctx);
+                  // Opcional: Refrescar el mapa aquí
+                },
+                child: const Text('¡Genial!'),
+              ),
+            ],
           ),
         );
       }
 
     } catch (e) {
-      if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Error: $e')));
+      // --- ERROR (Tesoro borrado o error de red) ---
+      if (mounted) {
+        showDialog(
+          context: context,
+          builder: (ctx) => AlertDialog(
+            title: const Text('Se te acabó el tiempo. Suerte para la próxima'),
+            content: Text(e.toString().replaceAll("Exception: ", "")), // Limpiar mensaje
+            actions: [
+              TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('Entendido')),
+            ],
+          ),
+        );
+      }
     } finally {
       if (mounted) {
         setState(() {
           _isClaiming = false;
-          _treasureInRange = null;
+          _treasureInRange = null; // Ocultar botón
         });
       }
     }
   }
 
+  // --- 3. GPS ---
   Future<void> _checkLocationPermissions() async {
     bool serviceEnabled = await Geolocator.isLocationServiceEnabled();
     if (!serviceEnabled) return;
@@ -206,18 +355,88 @@ class _UserMapViewState extends State<UserMapView> {
   }
 
   void _startListeningLocation() {
-    const LocationSettings locationSettings = LocationSettings(accuracy: LocationAccuracy.bestForNavigation, distanceFilter: 2);
-    _positionStream = Geolocator.getPositionStream(locationSettings: locationSettings).listen((pos) {
+    const LocationSettings locationSettings = LocationSettings(
+        accuracy: LocationAccuracy.bestForNavigation,
+        distanceFilter: 2
+    );
+
+    _positionStream = Geolocator.getPositionStream(
+        locationSettings: locationSettings
+    ).listen((pos) { // Se ejecuta CADA VEZ que el GPS reporta una nueva posición
       if (mounted) {
-        setState(() { _currentPosition = LatLng(pos.latitude, pos.longitude); });
+        final newPosition = LatLng(pos.latitude, pos.longitude);
+
+        final uncollected = _allTreasures.where((t) => !(widget.user.foundTreasures?.contains(t.id) ?? false)).toList();
+        TreasureModel? foundInRange;
+
+        for (var t in uncollected) {
+          final double dist = _distanceCalculator.as(LengthUnit.Meter, newPosition, LatLng(t.location.latitude, t.location.longitude));
+          if (dist <= 5) { // Si un tesoro está en el rango de 5 metros
+            foundInRange = t;
+            break;
+          }
+        }
+
+        // Comprobamos si el tesoro en rango ha cambiado
+        if (foundInRange?.id != _treasureInRange?.id) {
+
+          if (foundInRange != null) {
+            _vibratePhone();
+
+            // 1. Verificamos si es temporal Y si la fecha es válida
+            if (foundInRange!.isLimitedTime && foundInRange!.limitedUntil != null) {
+
+              // CASO A: Tesoro con Tiempo Límite ⏳
+              // Le pasamos la fecha para que Android muestre el cronómetro
+              mostrarNotificacion(
+                  '¡CORRE! Tesoro Temporal ⏳',
+                  'Se acaba el tiempo. ¡Agita rápido para reclamar!',
+                  'tesoro',
+                  fechaLimite: foundInRange!.limitedUntil // <--- Pasamos la fecha aquí
+              );
+
+            } else {
+
+              // CASO B: Tesoro Normal 🟢
+              // No pasamos fecha, así que no mostrará cronómetro
+              mostrarNotificacion(
+                '¡Tesoro cerca! 🟢',
+                'Agita tu teléfono para reclamar el tesoro',
+                'tesoro',
+              );
+
+            }
+          }
+          setState(() {
+            _treasureInRange = foundInRange;
+          });
+        }
+
+        // Actualizamos la posición del usuario en el mapa y en la BD
+        setState(() {
+          _currentPosition = newPosition;
+        });
+        _saveLastKnownLocation(pos);
       }
     });
+  }
+
+  void _saveLastKnownLocation(Position position) {
+    // 1. Convertir la posición de Geolocator a un GeoPoint de Firestore
+    final GeoPoint geoPoint = GeoPoint(position.latitude, position.longitude);
+    // 2. Usar el nuevo método updateUser para actualizar SOLO este campo
+    _dbService.updateUser(
+      widget.user.uid,
+      // Solo actualiza 'lastKnownLocation'
+      {'lastKnownLocation': geoPoint},
+    );
   }
 
   void _centerOnUser() {
     if (_currentPosition != null) _mapController.move(_currentPosition!, 18);
   }
 
+  // Ruta optimizada: Solo considera los NO encontrados para guiarte
   List<LatLng> _calculateOptimizedRoute(List<TreasureModel> uncollectedTreasures) {
     if (_currentPosition == null) return [];
     List<TreasureModel> nearby = uncollectedTreasures.where((t) => _distanceCalculator.as(LengthUnit.Meter, _currentPosition!, LatLng(t.location.latitude, t.location.longitude)) <= 200).toList();
@@ -275,113 +494,113 @@ class _UserMapViewState extends State<UserMapView> {
     );
   }
 
+  Future<void> _vibratePhone() async {
+    try {
+      // 1. Verificar si el dispositivo puede vibrar
+      bool canVibrate = await Vibration.hasVibrator() ?? false;
+
+      if (canVibrate) {
+        // 2. Patrón de vibración: Vibra por 500ms y luego pausa 200ms (un pulso rápido)
+        Vibration.vibrate(duration: 500);
+        // Si quieres un patrón de pulsos:
+        // Vibration.vibrate(pattern: [0, 500, 200, 500]); // Pausa, Vibra, Pausa, Vibra
+      }
+    } catch (e) {
+      print('Error al intentar vibrar: $e');
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
+
+    List<Marker> markers = [];
+    List<LatLng> routePoints = [];
+
+    // Lógica que estaba en el builder, ahora usa el estado local
+    final uncollectedTreasures = _allTreasures.where((t) => !(widget.user.foundTreasures?.contains(t.id) ?? false)).toList();
+
+    markers = _allTreasures.map((t) {
+      bool isFound = widget.user.foundTreasures?.contains(t.id) ?? false;
+      Color markerColor;
+      if (isFound) markerColor = Colors.grey;
+      else if (t.id == _treasureInRange?.id) markerColor = Colors.green;
+      else markerColor = Colors.red;
+
+      return Marker(
+        point: LatLng(t.location.latitude, t.location.longitude),
+        width: 60, height: 60,
+        child: GestureDetector(
+          onTap: () => _showTreasureDetails(t, isFound),
+          child: Icon(Icons.location_on, color: markerColor, size: 50),
+        ),
+      );
+    }).toList();
+
+    if (_showRoute && _currentPosition != null) {
+      routePoints = _calculateOptimizedRoute(uncollectedTreasures);
+    }
+
+    if (_currentPosition != null) {
+      markers.add(Marker(
+          point: _currentPosition!,
+          width: 50, height: 50,
+          child: const Icon(Icons.person_pin_circle, color: Colors.blue, size: 40)
+      ));
+    }
+
     return Scaffold(
-      floatingActionButton: Column(mainAxisAlignment: MainAxisAlignment.end, children: [
-        FloatingActionButton(heroTag: "routeBtn", backgroundColor: _showRoute ? Colors.deepPurple : Colors.white, onPressed: () => setState(() => _showRoute = !_showRoute), child: Icon(Icons.alt_route, color: _showRoute ? Colors.white : Colors.deepPurple)),
+      floatingActionButton: Column(
+          mainAxisAlignment: MainAxisAlignment.end, children: [
+        FloatingActionButton(heroTag: "routeBtn",
+            backgroundColor: _showRoute ? Colors.deepPurple : Colors.white,
+            onPressed: () => setState(() => _showRoute = !_showRoute),
+            child: Icon(Icons.alt_route,
+                color: _showRoute ? Colors.white : Colors.deepPurple)),
         const SizedBox(height: 10),
-        FloatingActionButton(heroTag: "gpsBtn", onPressed: _centerOnUser, child: const Icon(Icons.my_location)),
+        FloatingActionButton(heroTag: "gpsBtn",
+            onPressed: _centerOnUser,
+            child: const Icon(Icons.my_location)),
       ]),
+
+
       body: Stack(
         children: [
-          StreamBuilder<QuerySnapshot>(
-            stream: FirebaseFirestore.instance.collection('treasures').snapshots(),
-            builder: (context, snapshot) {
-              List<Marker> markers = [];
-              List<LatLng> routePoints = [];
-              TreasureModel? closestTreasure;
-
-              if (snapshot.hasData) {
-                final allDocs = snapshot.data!.docs;
-                final allTreasures = allDocs.map((d) => TreasureModel.fromMap(d.data() as Map<String, dynamic>, d.id)).toList();
-
-                final uncollectedTreasures = allTreasures.where((t) => !(widget.user.foundTreasures?.contains(t.id) ?? false)).toList();
-
-                if (_currentPosition != null) {
-                  for (var t in uncollectedTreasures) {
-                    final double dist = _distanceCalculator.as(LengthUnit.Meter, _currentPosition!, LatLng(t.location.latitude, t.location.longitude));
-                    if (dist <= 5) {
-                      closestTreasure = t;
-                      if (_treasureInRange != t) {
-                        WidgetsBinding.instance.addPostFrameCallback((_) { setState(() { _treasureInRange = t; }); });
-                      }
-                    }
-                  }
-                  if (closestTreasure == null && _treasureInRange != null) {
-                    WidgetsBinding.instance.addPostFrameCallback((_) { setState(() { _treasureInRange = null; }); });
-                  }
-                }
-
-                markers = allTreasures.map((t) {
-                  bool isFound = widget.user.foundTreasures?.contains(t.id) ?? false;
-                  Color markerColor;
-                  IconData markerIcon;
-
-                  if (isFound) {
-                    markerColor = Colors.grey;
-                    markerIcon = Icons.check_circle;
-                  } else if (t == _treasureInRange) {
-                    markerColor = Colors.green;
-                    markerIcon = Icons.location_on;
-                  } else {
-                    markerColor = Colors.red;
-                    markerIcon = Icons.location_on;
-                  }
-
-                  return Marker(
-                    point: LatLng(t.location.latitude, t.location.longitude),
-                    width: 60, height: 60,
-                    child: GestureDetector(
-                      onTap: () => _showTreasureDetails(t, isFound),
-                      child: Icon(markerIcon, color: markerColor, size: 50),
-                    ),
-                  );
-                }).toList();
-
-                if (_showRoute && _currentPosition != null) {
-                  routePoints = _calculateOptimizedRoute(uncollectedTreasures);
-                }
-              }
-
-              if (_currentPosition != null) {
-                markers.add(Marker(point: _currentPosition!, width: 50, height: 50, child: const Icon(Icons.person_pin_circle, color: Colors.blue, size: 40)));
-              }
-
-              return FlutterMap(
-                mapController: _mapController,
-                options: MapOptions(initialCenter: _tepicCenter, initialZoom: 14),
-                children: [
-                  TileLayer(urlTemplate: 'https://tile.openstreetmap.org/{z}/{x}/{y}.png', userAgentPackageName: 'com.geohunt.app'),
-                  if (_showRoute && routePoints.isNotEmpty) PolylineLayer(polylines: [Polyline(points: routePoints, strokeWidth: 5, color: Colors.deepPurple)]),
-                  if (_treasureInRange != null && _currentPosition != null)
-                    CircleLayer(circles: [
-                      CircleMarker(
-                          point: LatLng(_treasureInRange!.location.latitude, _treasureInRange!.location.longitude),
-                          radius: 15,
-                          useRadiusInMeter: true,
-                          color: Colors.green.withOpacity(0.3),
-                          borderColor: Colors.green,
-                          borderStrokeWidth: 2
-                      )
-                    ]),
-                  MarkerLayer(markers: markers),
-                ],
-              );
-            },
-          ),
-
+          FlutterMap(
+          mapController: _mapController,
+          options: MapOptions(initialCenter: _tepicCenter, initialZoom: 14),
+          children: [
+            TileLayer(urlTemplate: 'https://tile.openstreetmap.org/{z}/{x}/{y}.png', userAgentPackageName: 'com.geohunt.app'),
+            if (_showRoute && routePoints.isNotEmpty) PolylineLayer(polylines: [Polyline(points: routePoints, strokeWidth: 5, color: Colors.deepPurple)]),
+            if (_treasureInRange != null) CircleLayer(circles: [
+              CircleMarker(
+                  point: LatLng(_treasureInRange!.location.latitude, _treasureInRange!.location.longitude),
+                  radius: 15, useRadiusInMeter: true, color: Colors.green.withOpacity(0.3),
+                  borderColor: Colors.green, borderStrokeWidth: 2
+              )
+            ]),
+            MarkerLayer(markers: markers),
+          ],
+    ),
           if (_treasureInRange != null)
             Positioned(
               top: 50, left: 20, right: 20,
               child: Container(
                 padding: const EdgeInsets.all(15),
-                decoration: BoxDecoration(color: Colors.green, borderRadius: BorderRadius.circular(15), boxShadow: const [BoxShadow(color: Colors.black26, blurRadius: 10)]),
+                decoration: BoxDecoration(color: Colors.green,
+                    borderRadius: BorderRadius.circular(15),
+                    boxShadow: const [
+                      BoxShadow(color: Colors.black26, blurRadius: 10)
+                    ]),
                 child: Column(
                   children: [
-                    const Text("¡LISTO PARA CAZAR!", style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 18)),
+                    const Text("¡LISTO PARA CAZAR!", style: TextStyle(
+                        color: Colors.white,
+                        fontWeight: FontWeight.bold,
+                        fontSize: 18)),
                     const SizedBox(height: 5),
-                    Text("Agita tu teléfono para reclamar: ${_treasureInRange!.title}", style: const TextStyle(color: Colors.white), textAlign: TextAlign.center),
+                    Text("Agita tu teléfono para reclamar: ${_treasureInRange!
+                        .title}", style: const TextStyle(color: Colors.white),
+                        textAlign: TextAlign.center),
                     const Icon(Icons.vibration, color: Colors.white, size: 40)
                   ],
                 ),

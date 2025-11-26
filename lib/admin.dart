@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:io';
 import 'dart:async';
 import 'package:flutter/material.dart';
@@ -58,9 +59,13 @@ class _AdminScreenState extends State<AdminScreen> {
 
         final List<Widget> _widgetOptions = <Widget>[
           TreasuresMapView(adminUid: currentAdmin.uid),
+          // Índice 1: Lista de Tesoros
           const TreasuresListView(),
-          const UsersListView(),
+          // Índice 2: Exploradores
+          const UsersListView(), // <-- AÑADIDO
+          // Índice 3: Modificar Perfil
           ProfileEditView(adminUser: currentAdmin),
+          // Índice 4: Manual de Usuario
           const AdminManualView(),
         ];
 
@@ -81,12 +86,14 @@ class _AdminScreenState extends State<AdminScreen> {
             child: ListView(
               padding: EdgeInsets.zero,
               children: [
+                // --- CORRECCIÓN AQUÍ: Usamos DrawerHeader en lugar de UserAccountsDrawerHeader ---
                 DrawerHeader(
                   decoration: const BoxDecoration(color: Color(0xFF91B1A8)),
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
+                      // 1. IMAGEN DE PERFIL
                       CircleAvatar(
                         radius: 35,
                         backgroundColor: Colors.white,
@@ -101,6 +108,7 @@ class _AdminScreenState extends State<AdminScreen> {
                             : null,
                       ),
                       const SizedBox(height: 15),
+                      // 2. SOLO EL NOMBRE (Sin email, sin overflow)
                       Text(
                         currentAdmin.username,
                         style: const TextStyle(
@@ -114,6 +122,8 @@ class _AdminScreenState extends State<AdminScreen> {
                     ],
                   ),
                 ),
+                // --------------------------------------------------------------------------------
+
                 ListTile(leading: const Icon(Icons.map), title: const Text('Mapa y Rutas'), selected: _selectedIndex == 0, onTap: () => _onItemTapped(0)),
                 ListTile(leading: const Icon(Icons.diamond), title: const Text('Lista de Tesoros'), selected: _selectedIndex == 1, onTap: () => _onItemTapped(1)),
                 ListTile(leading: const Icon(Icons.people), title: const Text('Exploradores'), selected: _selectedIndex == 2, onTap: () => _onItemTapped(2)),
@@ -363,6 +373,26 @@ class _TreasuresMapViewState extends State<TreasuresMapView> {
                     if (!canAddPhoto) finalImageUrl = null;
 
                     try {
+                      final now = DateTime.now();
+                      DateTime? limitedUntil;
+
+                      if (isLimited) {
+                        // Duración según dificultad
+                        int minutes = 0;
+                        switch (difficulty) {
+                          case 'Fácil':
+                            minutes = 4;
+                            break;
+                          case 'Medio':
+                            minutes = 3;
+                            break;
+                          case 'Difícil':
+                            minutes = 2;
+                            break;
+                        }
+                        limitedUntil = now.add(Duration(minutes: minutes));
+                      }
+
                       final data = {
                         'title': titleController.text.trim(),
                         'description': descController.text.trim(),
@@ -371,8 +401,13 @@ class _TreasuresMapViewState extends State<TreasuresMapView> {
                         'location': GeoPoint(finalLocation.latitude, finalLocation.longitude),
                         'creatorUid': widget.adminUid,
                         'imageUrl': finalImageUrl,
+                        "notificationSent": false,
                         if (!isEditing) 'creationDate': Timestamp.now(),
+                        // Solo incluye el campo si está activo el tiempo limitado
+                        if (isLimited && limitedUntil != null)
+                          'limitedUntil': Timestamp.fromDate(limitedUntil),
                       };
+
 
                       if (isEditing) {
                         await FirebaseFirestore.instance.collection('treasures').doc(treasureToEdit.id).update(data);
@@ -685,11 +720,15 @@ class _ProfileEditViewState extends State<ProfileEditView> {
     try {
       final XFile? image = await picker.pickImage(source: source, imageQuality: 60, maxWidth: 512);
       if (image == null) return;
+
       setState(() => _isLoading = true);
+
       final storageRef = FirebaseStorage.instance.ref().child('profile_images').child('${widget.adminUser.uid}.jpg');
       await storageRef.putFile(File(image.path), SettableMetadata(contentType: 'image/jpeg'));
       final String downloadUrl = await storageRef.getDownloadURL();
+
       await FirebaseFirestore.instance.collection('users').doc(widget.adminUser.uid).update({'profileImageUrl': downloadUrl});
+
       if(mounted) ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Imagen actualizada')));
     } catch (e) {
       if(mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Error: $e')));

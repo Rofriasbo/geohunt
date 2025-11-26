@@ -5,7 +5,7 @@ import 'registro.dart';
 import 'pagina.dart';
 import 'admin.dart';
 import 'user.dart';
-import 'admin_model.dart'; // IMPORTANTE: Para mapear el admin
+import 'admin_model.dart'; // IMPORTANTE
 import 'registro_google.dart';
 
 class Login extends StatefulWidget {

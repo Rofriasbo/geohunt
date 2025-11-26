@@ -33,6 +33,7 @@ La aplicación adapta su interfaz y lógica de juego según el perfil del usuari
 | **Pistas** | **Ver Foto del Lugar** (Si existe) | **Subir Foto** (Cámara/Galería) |
 | **Rutas** | Ruta inteligente hacia pendientes | Trazado de rutas de prueba |
 | **Perfil** | Edición, Foto y Estadísticas | Edición completa y Gestión |
+| **Ranking** | Acceso al **Top 10 Global** | Visualización (sin participar) |
 
 ---
 
@@ -66,16 +67,24 @@ Arquitectura escalable basada en **Flutter** y servicios en la nube.
 | `sensors_plus` | Acceso al Acelerómetro para la mecánica de juego. |
 | `image_picker` | Selección de fotos (Cámara/Galería) con parámetros de calidad. |
 | `permission_handler`| Gestión segura de permisos de Android. |
+| ´flutter_local_notifications´ | Manejo de notificaciones locales. |
 
 ### 🔥 Backend (Firebase)
 
 | Servicio | Uso en GeoHunt |
 | :--- | :--- |
-| **Authentication** | Login tradicional y Google Sign-In (SHA-1 validado). |
-| **Firestore BD** | Base de datos NoSQL en tiempo real. |
-| **Storage** | Almacenamiento de imágenes (`profile_images/` y `treasure_images/`). |
+| **Authentication** | Login tradicional y Google Sign-In con validación SHA-1. |
+| **Firestore BD** | Base de datos NoSQL. Índices compuestos para Leaderboards. |
+| **Storage** | Almacenamiento de imágenes de perfil optimizadas. |
+| **Messaging** | Envío de notificaciones push dinámicamente al usuario. |
 
 ---
+
+## 🚨 Sistema de notificaciones locales y push
+- Cuando un usuario se encuentra a cinco metros de un tesoro sin reclamar, automáticamente le llega una notificación
+  indicando que realice el gesto de "agitar" (shake) el celular, para así, obtener su recompensa.
+- Al crearse un punto que se encuentra a un rango de un kilómetro del usuario, llegará una notificación para que
+  vaya a reclamar dicho punto mientras está disponible.
 
 ## ⚙️ Requisitos e Instalación
 
@@ -100,10 +109,12 @@ lib/
 │   ├── admin_model.dart  # Modelo de Administrador (Permisos)
 │   └── tesoro.dart       # Modelo de Tesoro (GeoPoint, ImageUrl)
 ├── screens/
-│   ├── login.dart        # Router de Roles
+│   ├── login.dart        # Inicio de sesión de usuarios
 │   ├── admin.dart        # Dashboard: Mapa CRUD, Fotos, Usuarios
+│   ├── registro.dart     # Registro de usuarios
 │   └── pagina.dart       # Juego: Mapa, Shake, Ranking, Pistas
 ├── services/
-│   ├── base.dart         # Lógica de Firestore
-│   └── registro_google.dart # Autenticación federada
-└── main.dart             # Inicialización
+│   ├── database_service.dart   # Lógica de Firestore
+│   ├── fcm_service.dart        # Lógica para generar el Firbase Cloud Messaging Token 
+│   └── registro_google.dart    # Autenticación federada
+└── main.dart                   # Inicialización

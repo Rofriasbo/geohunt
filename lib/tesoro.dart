@@ -8,6 +8,8 @@ class TreasureModel {
   final String difficulty;
   final String creatorUid;
   final bool isLimitedTime;
+  final DateTime? limitedUntil;
+  final bool notificationSent; //Adición para manejar los puntos temporales
   final Timestamp? creationDate;
   final Timestamp? expiryDate;
   final String? imageUrl; // NUEVO: URL de la imagen del tesoro
@@ -20,6 +22,8 @@ class TreasureModel {
     required this.difficulty,
     required this.creatorUid,
     this.isLimitedTime = false,
+    this.limitedUntil,
+    this.notificationSent = false,
     this.creationDate,
     this.expiryDate,
     this.imageUrl, // NUEVO
@@ -36,6 +40,10 @@ class TreasureModel {
       difficulty: data['difficulty'] ?? 'Medio',
       creatorUid: data['creatorUid'] ?? '',
       isLimitedTime: data['isLimitedTime'] ?? false,
+      limitedUntil: data['limitedUntil'] != null
+          ? (data['limitedUntil'] as Timestamp).toDate()
+          : null,
+      notificationSent: data['notificationSent'] ?? false,
       creationDate: data['creationDate'] as Timestamp?,
       expiryDate: data['expiryDate'] as Timestamp?,
       imageUrl: data['imageUrl'] as String?, // NUEVO
@@ -50,6 +58,8 @@ class TreasureModel {
       'difficulty': difficulty,
       'creatorUid': creatorUid,
       'isLimitedTime': isLimitedTime,
+      'limitedUntil': limitedUntil,
+      'notificationSent': notificationSent,
       'creationDate': creationDate ?? Timestamp.now(),
       'expiryDate': expiryDate,
       'imageUrl': imageUrl, // NUEVO

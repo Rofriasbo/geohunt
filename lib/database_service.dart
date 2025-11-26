@@ -1,6 +1,6 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'user.dart';
-import 'admin_model.dart'; // Importamos el nuevo modelo
+import 'admin_model.dart';
 import 'tesoro.dart';
 
 class DatabaseService {
@@ -12,6 +12,23 @@ class DatabaseService {
   // --- USUARIOS ---
   Future<void> createUser(UserModel user) async {
     await _db.collection(_userCollection).doc(user.uid).set(user.toJson());
+  }
+
+  Future<void> updateUser(String uid, Map<String, dynamic> data) async {
+    try {
+      await _db.collection(_userCollection).doc(uid).update(data);
+    } catch (e) {
+      print('Error al actualizar usuario $uid: $e');
+    }
+  }
+
+  Future<void> saveFCMToken(String uid, String? token) async {
+    if (token != null) {
+      await _db.collection(_userCollection).doc(uid).set({
+        'fcmToken': token, // Este es el campo que la Cloud Function utiliza
+      }, SetOptions(merge: true));
+      print("Token FCM guardado/actualizado en Firestore para UID: $uid");
+    }
   }
 
   // Método específico para crear/actualizar Admins

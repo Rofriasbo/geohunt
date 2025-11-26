@@ -3,7 +3,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'user.dart';
-import 'admin_model.dart'; // IMPORTANTE: Importar AdminModel
+import 'admin_model.dart';
 import 'pagina.dart';
 import 'admin.dart';
 
