@@ -98,24 +98,96 @@ class _LoginState extends State<Login> {
             mainAxisAlignment: MainAxisAlignment.center,
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: <Widget>[
-              Text('GeoHunt', textAlign: TextAlign.center, style: TextStyle(fontSize: 48, fontWeight: FontWeight.bold, color: primaryColor, shadows: [Shadow(blurRadius: 10.0, color: Colors.black.withOpacity(0.2), offset: const Offset(3.0, 3.0))])),
-              const SizedBox(height: 40),
-              TextField(controller: _emailController, decoration: InputDecoration(labelText: 'Correo', filled: true, fillColor: inputBgColor, prefixIcon: const Icon(Icons.email, color: accentColor), border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide.none))),
-              const SizedBox(height: 20),
-              TextField(controller: _passwordController, obscureText: true, decoration: InputDecoration(labelText: 'Contraseña', filled: true, fillColor: inputBgColor, prefixIcon: const Icon(Icons.lock, color: accentColor), border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide.none))),
-              const SizedBox(height: 30),
-              ElevatedButton(
-                onPressed: _performLogin,
-                style: ElevatedButton.styleFrom(backgroundColor: primaryColor, padding: const EdgeInsets.symmetric(vertical: 16), shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12))),
-                child: const Text('Iniciar Sesión', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Colors.white)),
+              // Logo/Icono grande
+              Container(
+                margin: const EdgeInsets.only(bottom: 12),
+                child: CircleAvatar(
+                  radius: 44,
+                  backgroundColor: accentColor,
+                  child: Icon(Icons.explore, color: Colors.white, size: 48),
+                ),
               ),
-              const SizedBox(height: 20),
-              // Botón de Google (También maneja roles internamente)
-              const GoogleLoginButton(),
-              const SizedBox(height: 20),
-              TextButton(
-                onPressed: _navigateToRegister,
-                child: const Text('¿No tienes cuenta? Regístrate aquí', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: secondaryColor)),
+              ShaderMask(
+                shaderCallback: (Rect bounds) {
+                  return LinearGradient(
+                    colors: [secondaryColor, primaryColor, accentColor],
+                    begin: Alignment.topLeft,
+                    end: Alignment.bottomRight,
+                  ).createShader(bounds);
+                },
+                child: Text(
+                  'GeoHunt',
+                  textAlign: TextAlign.center,
+                  style: TextStyle(
+                    fontSize: 54,
+                    fontWeight: FontWeight.bold,
+                    letterSpacing: 3,
+                    color: Colors.white,
+                    shadows: [
+                      Shadow(blurRadius: 16.0, color: Colors.black.withOpacity(0.25), offset: const Offset(0, 4)),
+                    ],
+                  ),
+                ),
+              ),
+              const SizedBox(height: 32),
+              // Card con sombra para el formulario
+              Card(
+                color: inputBgColor,
+                elevation: 8,
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(18)),
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 28),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: [
+                      TextField(
+                        controller: _emailController,
+                        decoration: InputDecoration(
+                          labelText: 'Correo',
+                          filled: true,
+                          fillColor: Colors.white,
+                          prefixIcon: Icon(Icons.email, color: accentColor),
+                          border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide.none),
+                        ),
+                      ),
+                      const SizedBox(height: 18),
+                      TextField(
+                        controller: _passwordController,
+                        obscureText: true,
+                        decoration: InputDecoration(
+                          labelText: 'Contraseña',
+                          filled: true,
+                          fillColor: Colors.white,
+                          prefixIcon: Icon(Icons.lock, color: accentColor),
+                          border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide.none),
+                        ),
+                      ),
+                      const SizedBox(height: 28),
+                      AnimatedContainer(
+                        duration: const Duration(milliseconds: 300),
+                        curve: Curves.easeInOut,
+                        child: ElevatedButton(
+                          onPressed: _performLogin,
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: primaryColor,
+                            padding: const EdgeInsets.symmetric(vertical: 16),
+                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                            elevation: 2,
+                          ),
+                          child: const Text('Iniciar Sesión', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Colors.white)),
+                        ),
+                      ),
+                      const SizedBox(height: 18),
+                      // Botón Google original
+                      const GoogleLoginButton(),
+                      const SizedBox(height: 10),
+                      TextButton(
+                        onPressed: _navigateToRegister,
+                        child: Text('¿No tienes cuenta? Regístrate aquí', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: secondaryColor)),
+                      ),
+                    ],
+                  ),
+                ),
               ),
             ],
           ),

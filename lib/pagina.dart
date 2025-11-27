@@ -15,11 +15,19 @@ import 'package:vibration/vibration.dart';
 import 'database_service.dart';
 import 'fcm_service.dart';
 import 'package:sensors_plus/sensors_plus.dart';
+
 import 'login.dart';
 import 'notificaciones.dart';
 import 'user.dart';
 import 'tesoro.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
+
+// Paleta de colores global
+const Color primaryColor = Color(0xFF91B1A8);
+const Color backgroundColor = Color(0xFF97AAA6);
+const Color secondaryColor = Color(0xFF8992D7);
+const Color accentColor = Color(0xFF8CB9AC);
+const Color cardColor = Color(0xFFE6F2EF);
 
 class WelcomeScreen extends StatefulWidget {
   final String username;
@@ -33,9 +41,7 @@ class _WelcomeScreenState extends State<WelcomeScreen> {
   int _selectedIndex = 0;
   final String _currentUid = FirebaseAuth.instance.currentUser!.uid;
 
-  static const Color primaryColor = Color(0xFF91B1A8);
-  static const Color backgroundColor = Color(0xFF97AAA6);
-  static const Color secondaryColor = Color(0xFF8992D7);
+  // ...colores globales...
 
   Future<void> saveFCMTokenAndLocation(String uid) async {
     final DatabaseService dbService = DatabaseService();
@@ -131,11 +137,12 @@ class _WelcomeScreenState extends State<WelcomeScreen> {
         return Scaffold(
           backgroundColor: backgroundColor,
           appBar: AppBar(
-            title: const Text('GeoHunt Explorador', style: TextStyle(fontWeight: FontWeight.bold)),
+            title: const Text('GeoHunt Explorador', style: TextStyle(fontWeight: FontWeight.bold, color: Colors.white, fontSize: 22)),
             backgroundColor: primaryColor,
+            elevation: 4,
             actions: [
               IconButton(
-                icon: const Icon(Icons.exit_to_app),
+                icon: const Icon(Icons.exit_to_app, color: Colors.white),
                 onPressed: () async {
                   await FirebaseAuth.instance.signOut();
                   if (mounted) Navigator.of(context).pushAndRemoveUntil(MaterialPageRoute(builder: (context) => const Login()), (route) => false);
@@ -143,18 +150,39 @@ class _WelcomeScreenState extends State<WelcomeScreen> {
               )
             ],
           ),
-          body: _widgetOptions.elementAt(_selectedIndex),
-          bottomNavigationBar: BottomNavigationBar(
-            items: const <BottomNavigationBarItem>[
-              BottomNavigationBarItem(icon: Icon(Icons.map), label: 'Cazar'),
-              BottomNavigationBarItem(icon: Icon(Icons.emoji_events), label: 'Top 10'),
-              BottomNavigationBarItem(icon: Icon(Icons.person), label: 'Perfil'),
-            ],
-            currentIndex: _selectedIndex,
-            selectedItemColor: secondaryColor,
-            unselectedItemColor: Colors.grey,
-            onTap: _onItemTapped,
-            backgroundColor: Colors.white,
+          body: Container(
+            decoration: BoxDecoration(
+              gradient: LinearGradient(
+                colors: [backgroundColor, accentColor],
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+              ),
+            ),
+            child: _widgetOptions.elementAt(_selectedIndex),
+          ),
+          bottomNavigationBar: Container(
+            decoration: BoxDecoration(
+              color: Colors.white,
+              boxShadow: [BoxShadow(color: Colors.black12, blurRadius: 8)],
+              borderRadius: const BorderRadius.only(
+                topLeft: Radius.circular(18),
+                topRight: Radius.circular(18),
+              ),
+            ),
+            child: BottomNavigationBar(
+              items: const <BottomNavigationBarItem>[
+                BottomNavigationBarItem(icon: Icon(Icons.map), label: 'Cazar'),
+                BottomNavigationBarItem(icon: Icon(Icons.emoji_events), label: 'Top 10'),
+                BottomNavigationBarItem(icon: Icon(Icons.person), label: 'Perfil'),
+              ],
+              currentIndex: _selectedIndex,
+              selectedItemColor: secondaryColor,
+              unselectedItemColor: Colors.grey,
+              onTap: _onItemTapped,
+              backgroundColor: Colors.white,
+              elevation: 0,
+              type: BottomNavigationBarType.fixed,
+            ),
           ),
         );
       },
@@ -620,10 +648,26 @@ class LeaderboardView extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      color: Colors.white,
+      decoration: BoxDecoration(
+        color: cardColor,
+        borderRadius: BorderRadius.circular(18),
+        boxShadow: [BoxShadow(color: Colors.black12, blurRadius: 8)],
+      ),
+      margin: const EdgeInsets.all(12),
       child: Column(
         children: [
-          Container(padding: const EdgeInsets.all(20), color: const Color(0xFF8CB9AC), width: double.infinity, child: const Text("🏆 Mejores Cazadores", textAlign: TextAlign.center, style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold, color: Colors.white))),
+          Container(
+            padding: const EdgeInsets.all(20),
+            decoration: BoxDecoration(
+              color: accentColor,
+              borderRadius: const BorderRadius.only(
+                topLeft: Radius.circular(18),
+                topRight: Radius.circular(18),
+              ),
+            ),
+            width: double.infinity,
+            child: const Text("🏆 Mejores Cazadores", textAlign: TextAlign.center, style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold, color: Colors.white, letterSpacing: 1.2)),
+          ),
           Expanded(
             child: StreamBuilder<QuerySnapshot>(
               stream: FirebaseFirestore.instance.collection('users').where('role', isEqualTo: 'user').orderBy('score', descending: true).limit(10).snapshots(),
@@ -634,11 +678,28 @@ class LeaderboardView extends StatelessWidget {
                   itemCount: snapshot.data!.docs.length,
                   itemBuilder: (context, index) {
                     final data = snapshot.data!.docs[index].data() as Map<String, dynamic>;
-                    return Card(margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8), child: ListTile(
-                      leading: CircleAvatar(backgroundImage: data['profileImageUrl'] != null ? NetworkImage(data['profileImageUrl']) : null, child: data['profileImageUrl'] == null ? Text(data['username']?[0] ?? '?') : null),
-                      title: Text(data['username'] ?? 'Anónimo'),
-                      trailing: Text("${data['score'] ?? 0} pts", style: const TextStyle(fontWeight: FontWeight.bold, color: Colors.deepPurple)),
-                    ));
+                    return Card(
+                      color: Colors.white,
+                      elevation: 3,
+                      margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+                      child: ListTile(
+                        leading: CircleAvatar(
+                          backgroundColor: accentColor,
+                          backgroundImage: data['profileImageUrl'] != null ? NetworkImage(data['profileImageUrl']) : null,
+                          child: data['profileImageUrl'] == null ? Text(data['username']?[0] ?? '?', style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold)) : null,
+                        ),
+                        title: Text(data['username'] ?? 'Anónimo', style: const TextStyle(fontWeight: FontWeight.w600, color: Color(0xFF333333))),
+                        trailing: Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                          decoration: BoxDecoration(
+                            color: secondaryColor,
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                          child: Text("${data['score'] ?? 0} pts", style: const TextStyle(fontWeight: FontWeight.bold, color: Colors.white)),
+                        ),
+                      ),
+                    );
                   },
                 );
               },
@@ -662,7 +723,7 @@ class UserProfileView extends StatefulWidget {
 class _UserProfileViewState extends State<UserProfileView> {
   late TextEditingController _usernameController;
   late TextEditingController _phoneController;
-  bool _isLoading = false;
+  // bool _isLoading = false; // No se usa
   String? _currentImageUrl;
 
   @override
@@ -673,12 +734,12 @@ class _UserProfileViewState extends State<UserProfileView> {
     final ImagePicker picker = ImagePicker();
     final XFile? image = await picker.pickImage(source: source, imageQuality: 60, maxWidth: 512);
     if (image == null) return;
-    setState(()=>_isLoading=true);
+    // ...eliminado _isLoading...
     final ref = FirebaseStorage.instance.ref().child('profile_images').child('${widget.user.uid}.jpg');
     await ref.putFile(File(image.path), SettableMetadata(contentType: 'image/jpeg'));
     final url = await ref.getDownloadURL();
     await FirebaseFirestore.instance.collection('users').doc(widget.user.uid).update({'profileImageUrl': url});
-    setState(()=>_isLoading=false);
+    // ...eliminado _isLoading...
   }
 
   Future<void> _updateProfile() async {
@@ -688,12 +749,180 @@ class _UserProfileViewState extends State<UserProfileView> {
 
   @override
   Widget build(BuildContext context) {
-    return SingleChildScrollView(padding: const EdgeInsets.all(24), child: Column(children: [
-      GestureDetector(onTap: () => showModalBottomSheet(context: context, builder: (ctx)=>Wrap(children: [ListTile(leading: const Icon(Icons.photo), title: const Text('Galería'), onTap: (){Navigator.pop(ctx); _pickAndUploadImage(ImageSource.gallery);}), ListTile(leading: const Icon(Icons.camera), title: const Text('Cámara'), onTap: (){Navigator.pop(ctx); _pickAndUploadImage(ImageSource.camera);})])), child: CircleAvatar(radius: 60, backgroundImage: _currentImageUrl!=null?NetworkImage(_currentImageUrl!):null, child: _currentImageUrl==null?const Icon(Icons.camera_alt):null)),
-      const SizedBox(height: 20),
-      Card(elevation: 4, child: Padding(padding: const EdgeInsets.all(16.0), child: Row(mainAxisAlignment: MainAxisAlignment.spaceAround, children: [Column(children: [const Text('Puntaje', style: TextStyle(color: Colors.grey)), Text('${widget.user.score}', style: const TextStyle(fontSize: 22, fontWeight: FontWeight.bold, color: Color(0xFF8992D7)))]), Container(height: 30, width: 1, color: Colors.grey), Column(children: [const Text('Tesoros', style: TextStyle(color: Colors.grey)), Text('${widget.user.foundTreasures?.length ?? 0}', style: const TextStyle(fontSize: 22, fontWeight: FontWeight.bold, color: Color(0xFF8992D7)))])]))),
-      const SizedBox(height: 20),
-      TextField(controller: _usernameController, decoration: const InputDecoration(labelText: 'Nombre')), const SizedBox(height: 10), TextField(controller: _phoneController, decoration: const InputDecoration(labelText: 'Teléfono')), const SizedBox(height: 20), ElevatedButton(onPressed: _updateProfile, child: const Text('Guardar'))
-    ]));
+    return Container(
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          colors: [backgroundColor, accentColor],
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+        ),
+      ),
+      child: SingleChildScrollView(
+        padding: const EdgeInsets.all(24),
+        child: Column(
+          children: [
+            // Cabecera visual con avatar y nombre
+            Stack(
+              alignment: Alignment.center,
+              children: [
+                Container(
+                  margin: const EdgeInsets.only(bottom: 24),
+                  width: double.infinity,
+                  height: 120,
+                  decoration: BoxDecoration(
+                    borderRadius: BorderRadius.circular(24),
+                    gradient: LinearGradient(
+                      colors: [secondaryColor.withOpacity(0.18), accentColor.withOpacity(0.18)],
+                      begin: Alignment.topLeft,
+                      end: Alignment.bottomRight,
+                    ),
+                  ),
+                ),
+                Column(
+                  children: [
+                    GestureDetector(
+                      onTap: () => showModalBottomSheet(
+                        context: context,
+                        shape: const RoundedRectangleBorder(
+                          borderRadius: BorderRadius.vertical(top: Radius.circular(18)),
+                        ),
+                        builder: (ctx) => Wrap(
+                          children: [
+                            ListTile(
+                              leading: Icon(Icons.photo, color: secondaryColor),
+                              title: const Text('Galería'),
+                              onTap: () {
+                                Navigator.pop(ctx);
+                                _pickAndUploadImage(ImageSource.gallery);
+                              },
+                            ),
+                            ListTile(
+                              leading: Icon(Icons.camera, color: secondaryColor),
+                              title: const Text('Cámara'),
+                              onTap: () {
+                                Navigator.pop(ctx);
+                                _pickAndUploadImage(ImageSource.camera);
+                              },
+                            ),
+                          ],
+                        ),
+                      ),
+                      child: CircleAvatar(
+                        radius: 54,
+                        backgroundColor: accentColor,
+                        backgroundImage: _currentImageUrl != null ? NetworkImage(_currentImageUrl!) : null,
+                        child: _currentImageUrl == null ? const Icon(Icons.camera_alt, color: Colors.white, size: 38) : null,
+                      ),
+                    ),
+                    const SizedBox(height: 10),
+                    ShaderMask(
+                      shaderCallback: (Rect bounds) {
+                        return LinearGradient(
+                          colors: [secondaryColor, primaryColor],
+                          begin: Alignment.topLeft,
+                          end: Alignment.bottomRight,
+                        ).createShader(bounds);
+                      },
+                      child: Text(
+                        widget.user.username,
+                        style: const TextStyle(
+                          fontSize: 28,
+                          fontWeight: FontWeight.bold,
+                          color: Colors.white,
+                          letterSpacing: 1.2,
+                          shadows: [
+                            Shadow(blurRadius: 8, color: Colors.black26, offset: Offset(0, 2)),
+                          ],
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ],
+            ),
+            // Card de estadísticas con iconos
+            Card(
+              color: cardColor,
+              elevation: 5,
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(18)),
+              margin: const EdgeInsets.only(bottom: 18),
+              child: Padding(
+                padding: const EdgeInsets.symmetric(vertical: 18, horizontal: 12),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                  children: [
+                    Column(
+                      children: [
+                        Icon(Icons.star, color: secondaryColor, size: 28),
+                        const SizedBox(height: 4),
+                        const Text('Puntaje', style: TextStyle(color: Colors.grey)),
+                        Text('${widget.user.score}', style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold, color: secondaryColor)),
+                      ],
+                    ),
+                    Container(height: 40, width: 1, color: Colors.grey[300]),
+                    Column(
+                      children: [
+                        Icon(Icons.emoji_events, color: secondaryColor, size: 28),
+                        const SizedBox(height: 4),
+                        const Text('Tesoros', style: TextStyle(color: Colors.grey)),
+                        Text('${widget.user.foundTreasures?.length ?? 0}', style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold, color: secondaryColor)),
+                      ],
+                    ),
+                  ],
+                ),
+              ),
+            ),
+            // Inputs modernos
+            const SizedBox(height: 10),
+            TextField(
+              controller: _usernameController,
+              decoration: InputDecoration(
+                labelText: 'Nombre',
+                labelStyle: TextStyle(fontWeight: FontWeight.bold, color: secondaryColor),
+                filled: true,
+                fillColor: cardColor,
+                border: OutlineInputBorder(borderRadius: BorderRadius.circular(14)),
+                focusedBorder: OutlineInputBorder(borderSide: BorderSide(color: secondaryColor), borderRadius: BorderRadius.circular(14)),
+                prefixIcon: Icon(Icons.person, color: accentColor),
+              ),
+            ),
+            const SizedBox(height: 14),
+            TextField(
+              controller: _phoneController,
+              decoration: InputDecoration(
+                labelText: 'Teléfono',
+                labelStyle: TextStyle(fontWeight: FontWeight.bold, color: secondaryColor),
+                filled: true,
+                fillColor: cardColor,
+                border: OutlineInputBorder(borderRadius: BorderRadius.circular(14)),
+                focusedBorder: OutlineInputBorder(borderSide: BorderSide(color: secondaryColor), borderRadius: BorderRadius.circular(14)),
+                prefixIcon: Icon(Icons.phone, color: accentColor),
+              ),
+              keyboardType: TextInputType.phone,
+            ),
+            const SizedBox(height: 22),
+            SizedBox(
+              width: double.infinity,
+              child: AnimatedContainer(
+                duration: const Duration(milliseconds: 300),
+                curve: Curves.easeInOut,
+                child: ElevatedButton(
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: secondaryColor,
+                    foregroundColor: Colors.white,
+                    padding: const EdgeInsets.symmetric(vertical: 16),
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+                    textStyle: const TextStyle(fontWeight: FontWeight.bold, fontSize: 17),
+                    elevation: 3,
+                  ),
+                  onPressed: _updateProfile,
+                  child: const Text('Guardar'),
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
   }
 }

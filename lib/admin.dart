@@ -79,67 +79,92 @@ class _AdminScreenState extends State<AdminScreen> {
 
         return Scaffold(
           appBar: AppBar(
-            title: Text(_titles[_selectedIndex]),
+            title: Text(
+              _titles[_selectedIndex],
+              style: const TextStyle(
+                fontWeight: FontWeight.bold,
+                fontSize: 24,
+                color: Colors.white,
+                letterSpacing: 1.5,
+                shadows: [Shadow(blurRadius: 16, color: Colors.black54, offset: Offset(0, 4))],
+              ),
+            ),
             backgroundColor: const Color(0xFF91B1A8),
+            elevation: 6,
+            centerTitle: true,
           ),
           drawer: Drawer(
-            child: ListView(
-              padding: EdgeInsets.zero,
-              children: [
-                // --- CORRECCIÓN AQUÍ: Usamos DrawerHeader en lugar de UserAccountsDrawerHeader ---
-                DrawerHeader(
-                  decoration: const BoxDecoration(color: Color(0xFF91B1A8)),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      // 1. IMAGEN DE PERFIL
-                      CircleAvatar(
-                        radius: 35,
-                        backgroundColor: Colors.white,
-                        backgroundImage: (currentAdmin.profileImageUrl != null && currentAdmin.profileImageUrl!.isNotEmpty)
-                            ? NetworkImage(currentAdmin.profileImageUrl!)
-                            : null,
-                        child: (currentAdmin.profileImageUrl == null || currentAdmin.profileImageUrl!.isEmpty)
-                            ? Text(
-                          currentAdmin.username.isNotEmpty ? currentAdmin.username[0].toUpperCase() : 'A',
-                          style: const TextStyle(fontSize: 30.0, color: Color(0xFF91B1A8)),
-                        )
-                            : null,
-                      ),
-                      const SizedBox(height: 15),
-                      // 2. SOLO EL NOMBRE (Sin email, sin overflow)
-                      Text(
-                        currentAdmin.username,
-                        style: const TextStyle(
-                          color: Colors.white,
-                          fontWeight: FontWeight.bold,
-                          fontSize: 20,
+            child: Container(
+              decoration: const BoxDecoration(
+                gradient: LinearGradient(
+                  colors: [Color(0xFF91B1A8), Color(0xFF8992D7)],
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
+                ),
+              ),
+              child: ListView(
+                padding: EdgeInsets.zero,
+                children: [
+                  DrawerHeader(
+                    decoration: const BoxDecoration(color: Colors.transparent),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        CircleAvatar(
+                          radius: 38,
+                          backgroundColor: Colors.white,
+                          backgroundImage: (currentAdmin.profileImageUrl != null && currentAdmin.profileImageUrl!.isNotEmpty)
+                              ? NetworkImage(currentAdmin.profileImageUrl!)
+                              : null,
+                          child: (currentAdmin.profileImageUrl == null || currentAdmin.profileImageUrl!.isEmpty)
+                              ? Text(
+                            currentAdmin.username.isNotEmpty ? currentAdmin.username[0].toUpperCase() : 'A',
+                            style: const TextStyle(fontSize: 32.0, color: Color(0xFF91B1A8)),
+                          )
+                              : null,
                         ),
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                      ),
-                    ],
+                        const SizedBox(height: 15),
+                        Text(
+                          currentAdmin.username,
+                          style: const TextStyle(
+                            color: Colors.white,
+                            fontWeight: FontWeight.bold,
+                            fontSize: 22,
+                            letterSpacing: 1.1,
+                          ),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                      ],
+                    ),
                   ),
-                ),
-                // --------------------------------------------------------------------------------
-
-                ListTile(leading: const Icon(Icons.map), title: const Text('Mapa y Rutas'), selected: _selectedIndex == 0, onTap: () => _onItemTapped(0)),
-                ListTile(leading: const Icon(Icons.diamond), title: const Text('Lista de Tesoros'), selected: _selectedIndex == 1, onTap: () => _onItemTapped(1)),
-                ListTile(leading: const Icon(Icons.people), title: const Text('Exploradores'), selected: _selectedIndex == 2, onTap: () => _onItemTapped(2)),
-                ListTile(leading: const Icon(Icons.person), title: const Text('Modificar Perfil'), selected: _selectedIndex == 3, onTap: () => _onItemTapped(3)),
-                const Divider(),
-                ListTile(
-                    leading: const Icon(Icons.menu_book, color: Color(0xFF8992D7)),
-                    title: const Text('Manual de Usuario'),
-                    selected: _selectedIndex == 4,
-                    onTap: () => _onItemTapped(4)
-                ),
-                ListTile(leading: const Icon(Icons.logout, color: Colors.red), title: const Text('Cerrar Sesión'), onTap: _signOut),
-              ],
+                  ListTile(leading: const Icon(Icons.map, color: Colors.white), title: const Text('Mapa y Rutas', style: TextStyle(color: Colors.white)), selected: _selectedIndex == 0, onTap: () => _onItemTapped(0)),
+                  ListTile(leading: const Icon(Icons.diamond, color: Colors.white), title: const Text('Lista de Tesoros', style: TextStyle(color: Colors.white)), selected: _selectedIndex == 1, onTap: () => _onItemTapped(1)),
+                  ListTile(leading: const Icon(Icons.people, color: Colors.white), title: const Text('Exploradores', style: TextStyle(color: Colors.white)), selected: _selectedIndex == 2, onTap: () => _onItemTapped(2)),
+                  ListTile(leading: const Icon(Icons.person, color: Colors.white), title: const Text('Modificar Perfil', style: TextStyle(color: Colors.white)), selected: _selectedIndex == 3, onTap: () => _onItemTapped(3)),
+                  const Divider(color: Colors.white70),
+                  ListTile(
+                      leading: const Icon(Icons.menu_book, color: Color(0xFF8992D7)),
+                      title: const Text('Manual de Usuario', style: TextStyle(color: Colors.white)),
+                      selected: _selectedIndex == 4,
+                      onTap: () => _onItemTapped(4)
+                  ),
+                  ListTile(leading: const Icon(Icons.logout, color: Colors.red), title: const Text('Cerrar Sesión', style: TextStyle(color: Colors.white)), onTap: _signOut),
+                ],
+              ),
             ),
           ),
-          body: _widgetOptions.elementAt(_selectedIndex),
+          body: Container(
+            decoration: const BoxDecoration(
+              gradient: LinearGradient(
+                colors: [Color(0xFFE6F2EF), Color(0xFF97AAA6)],
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+              ),
+            ),
+            child: _widgetOptions.elementAt(_selectedIndex),
+          ),
         );
       },
     );
@@ -575,14 +600,16 @@ class TreasuresListView extends StatelessWidget {
           itemBuilder: (context, index) {
             final t = TreasureModel.fromMap(snapshot.data!.docs[index].data() as Map<String, dynamic>, snapshot.data!.docs[index].id);
             return Card(
-              margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+              margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+              color: const Color(0xFFE6F2EF),
+              elevation: 5,
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
               child: ListTile(
-                // Muestra la foto en la lista si existe
                 leading: t.imageUrl != null
-                    ? CircleAvatar(backgroundImage: NetworkImage(t.imageUrl!))
-                    : const CircleAvatar(child: Icon(Icons.diamond)),
-                title: Text(t.title),
-                subtitle: Text(t.difficulty),
+                    ? CircleAvatar(backgroundImage: NetworkImage(t.imageUrl!), radius: 28)
+                    : const CircleAvatar(child: Icon(Icons.diamond), radius: 28),
+                title: Text(t.title, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 18)),
+                subtitle: Text(t.difficulty, style: const TextStyle(color: Color(0xFF8992D7), fontWeight: FontWeight.w500)),
                 trailing: IconButton(
                   icon: const Icon(Icons.delete, color: Colors.red),
                   onPressed: () => FirebaseFirestore.instance.collection('treasures').doc(t.id).delete(),
@@ -636,17 +663,27 @@ class UsersListView extends StatelessWidget {
             final doc = snapshot.data!.docs[index];
             final user = UserModel.fromMap(doc.data() as Map<String, dynamic>, doc.id);
             return Card(
-              margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-              elevation: 2,
+              margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+              color: const Color(0xFFE6F2EF),
+              elevation: 4,
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
               child: ListTile(
                 leading: CircleAvatar(
                   backgroundColor: const Color(0xFF91B1A8),
                   backgroundImage: user.profileImageUrl != null ? NetworkImage(user.profileImageUrl!) : null,
-                  child: user.profileImageUrl == null ? Text(user.username.isNotEmpty ? user.username[0].toUpperCase() : '?') : null,
+                  child: user.profileImageUrl == null ? Text(user.username.isNotEmpty ? user.username[0].toUpperCase() : '?', style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold)) : null,
+                  radius: 28,
                 ),
-                title: Text(user.username, style: const TextStyle(fontWeight: FontWeight.bold)),
-                subtitle: Text(user.email ?? 'Sin correo'),
-                trailing: Text('${user.score} pts', style: const TextStyle(fontWeight: FontWeight.bold)),
+                title: Text(user.username, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 18)),
+                subtitle: Text(user.email ?? 'Sin correo', style: const TextStyle(color: Color(0xFF8992D7))),
+                trailing: Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                  decoration: BoxDecoration(
+                    color: Color(0xFF8992D7),
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: Text('${user.score} pts', style: const TextStyle(fontWeight: FontWeight.bold, color: Colors.white)),
+                ),
                 onTap: () => _showUserDetails(context, user),
               ),
             );
@@ -754,29 +791,98 @@ class _ProfileEditViewState extends State<ProfileEditView> {
 
   @override
   Widget build(BuildContext context) {
-    return SingleChildScrollView(
-      padding: const EdgeInsets.all(24),
-      child: Column(
-        children: [
-          GestureDetector(
-            onTap: _isLoading ? null : _showSelectionDialog,
-            child: CircleAvatar(
-              radius: 60,
-              backgroundColor: const Color(0xFF91B1A8),
-              backgroundImage: (_currentImageUrl != null) ? NetworkImage(_currentImageUrl!) : null,
-              child: _currentImageUrl == null ? const Icon(Icons.person, size: 70, color: Colors.white) : null,
+    return Stack(
+      children: [
+        Container(
+          decoration: const BoxDecoration(
+            gradient: LinearGradient(
+              colors: [Color(0xFFE6F2EF), Color(0xFF97AAA6)],
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
             ),
           ),
-          const SizedBox(height: 20),
-          TextField(enabled: false, controller: TextEditingController(text: widget.adminUser.email), decoration: const InputDecoration(labelText: 'Correo', prefixIcon: Icon(Icons.email))),
-          const SizedBox(height: 20),
-          TextField(controller: _usernameController, decoration: const InputDecoration(labelText: 'Nombre', prefixIcon: Icon(Icons.person))),
-          const SizedBox(height: 20),
-          TextField(controller: _phoneController, keyboardType: TextInputType.phone, decoration: const InputDecoration(labelText: 'Teléfono', prefixIcon: Icon(Icons.phone))),
-          const SizedBox(height: 30),
-          ElevatedButton(onPressed: _isLoading ? null : _updateProfile, child: const Text('Guardar Cambios'))
-        ],
-      ),
+        ),
+        SingleChildScrollView(
+          padding: const EdgeInsets.all(24),
+          child: Column(
+            children: [
+              GestureDetector(
+                onTap: _isLoading ? null : _showSelectionDialog,
+                child: CircleAvatar(
+                  radius: 62,
+                  backgroundColor: const Color(0xFF91B1A8),
+                  backgroundImage: (_currentImageUrl != null) ? NetworkImage(_currentImageUrl!) : null,
+                  child: _currentImageUrl == null ? const Icon(Icons.person, size: 70, color: Colors.white) : null,
+                ),
+              ),
+              const SizedBox(height: 22),
+              Card(
+                color: Colors.white,
+                elevation: 4,
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                child: Padding(
+                  padding: const EdgeInsets.all(16.0),
+                  child: Column(
+                    children: [
+                      TextField(
+                        enabled: false,
+                        controller: TextEditingController(text: widget.adminUser.email),
+                        decoration: InputDecoration(
+                          labelText: 'Correo',
+                          prefixIcon: const Icon(Icons.email, color: Color(0xFF8992D7)),
+                          filled: true,
+                          fillColor: Color(0xFFE6F2EF),
+                          border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+                        ),
+                      ),
+                      const SizedBox(height: 16),
+                      TextField(
+                        controller: _usernameController,
+                        decoration: InputDecoration(
+                          labelText: 'Nombre',
+                          prefixIcon: const Icon(Icons.person, color: Color(0xFF91B1A8)),
+                          filled: true,
+                          fillColor: Color(0xFFE6F2EF),
+                          border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+                          focusedBorder: OutlineInputBorder(borderSide: BorderSide(color: Color(0xFF8992D7)), borderRadius: BorderRadius.circular(12)),
+                        ),
+                      ),
+                      const SizedBox(height: 16),
+                      TextField(
+                        controller: _phoneController,
+                        keyboardType: TextInputType.phone,
+                        decoration: InputDecoration(
+                          labelText: 'Teléfono',
+                          prefixIcon: const Icon(Icons.phone, color: Color(0xFF91B1A8)),
+                          filled: true,
+                          fillColor: Color(0xFFE6F2EF),
+                          border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+                          focusedBorder: OutlineInputBorder(borderSide: BorderSide(color: Color(0xFF8992D7)), borderRadius: BorderRadius.circular(12)),
+                        ),
+                      ),
+                      const SizedBox(height: 22),
+                      SizedBox(
+                        width: double.infinity,
+                        child: ElevatedButton(
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: Color(0xFF8992D7),
+                            foregroundColor: Colors.white,
+                            padding: const EdgeInsets.symmetric(vertical: 16),
+                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                            textStyle: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+                          ),
+                          onPressed: _isLoading ? null : _updateProfile,
+                          child: const Text('Guardar Cambios'),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ],
     );
   }
 }
