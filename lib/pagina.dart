@@ -552,6 +552,8 @@ class _UserMapViewState extends State<UserMapView> {
       Color markerColor;
       if (isFound) markerColor = Colors.grey;
       else if (t.id == _treasureInRange?.id) markerColor = Colors.green;
+      else if (t.isLimitedTime) markerColor = Colors.amber;
+
       else markerColor = Colors.red;
 
       return Marker(

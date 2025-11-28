@@ -539,16 +539,29 @@ class _TreasuresMapViewState extends State<TreasuresMapView> {
 
               if (snapshot.hasData) {
                 final allTreasures = snapshot.data!.docs.map((d) => TreasureModel.fromMap(d.data() as Map<String, dynamic>, d.id)).toList();
+                markers = allTreasures.map((t) {
 
-                markers = allTreasures.map((t) => Marker(
-                  point: LatLng(t.location.latitude, t.location.longitude),
-                  width: 60,
-                  height: 60,
-                  child: GestureDetector(
-                    onTap: () => _showTreasureDetails(t),
-                    child: const Icon(Icons.location_on, color: Colors.red, size: 50),
-                  ),
-                )).toList();
+                  Color markerColor;
+                  if (t.isLimitedTime) {
+                    markerColor = Colors.amber;
+                  } else {
+                    markerColor = Colors.red;
+                  }
+
+                  return Marker(
+                    point: LatLng(t.location.latitude, t.location.longitude),
+                    width: 60,
+                    height: 60,
+                    child: GestureDetector(
+                      onTap: () => _showTreasureDetails(t),
+                      child: Icon(
+                        Icons.location_on,
+                        color: markerColor,
+                        size: 50,
+                      ),
+                    ),
+                  );
+                }).toList();
 
                 if (_showRoutes && _currentPosition != null) {
                   routePoints = _calculateOptimizedRoute(allTreasures);
@@ -556,7 +569,9 @@ class _TreasuresMapViewState extends State<TreasuresMapView> {
               }
 
               if (_currentPosition != null) {
+
                 markers.add(Marker(point: _currentPosition!, width: 50, height: 50, child: const Icon(Icons.person_pin_circle, color: Colors.blue, size: 40)));
+
               }
 
               return FlutterMap(
