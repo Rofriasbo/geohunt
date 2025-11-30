@@ -15,6 +15,7 @@ import 'package:vibration/vibration.dart';
 import 'database_service.dart';
 import 'fcm_service.dart';
 import 'package:sensors_plus/sensors_plus.dart';
+import 'package:curved_navigation_bar/curved_navigation_bar.dart';
 
 import 'login.dart';
 import 'notificaciones.dart';
