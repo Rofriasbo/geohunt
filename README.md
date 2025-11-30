@@ -25,15 +25,15 @@ Esta versión perfecciona la jugabilidad con ayudas visuales y optimización de 
 
 La aplicación adapta su interfaz y lógica de juego según el perfil del usuario.
 
-| Característica | 🕵️‍♂️ Explorador (Usuario) | 👑 Administrador (Admin) |
-| :--- | :---: | :---: |
-| **Login** | Email / Contraseña | **Google Sign-In** / Email |
-| **Objetivo** | Cazar y Acumular Puntos | Crear y Gestionar el Mundo |
-| **Mapa** | Ver, Navegar y Reclamar | CRUD Completo de Tesoros |
-| **Pistas** | **Ver Foto del Lugar** (Si existe) | **Subir Foto** (Cámara/Galería) |
-| **Rutas** | Ruta inteligente hacia pendientes | Trazado de rutas de prueba |
-| **Perfil** | Edición, Foto y Estadísticas | Edición completa y Gestión |
-| **Ranking** | Acceso al **Top 10 Global** | Visualización (sin participar) |
+| Característica | 🕵️‍♂️ Explorador (Usuario)        | 👑 Administrador (Admin)        |
+|:---------------|:-----------------------------------|:--------------------------------|
+| **Login**      | Email / Contraseña                 | **Google Sign-In** / Email      |
+| **Objetivo**   | Cazar y Acumular Puntos            | Crear y Gestionar el Mundo      |
+| **Mapa**       | Ver, Navegar y Reclamar            | CRUD Completo de Tesoros        |
+| **Pistas**     | **Ver Foto del Lugar** (Si existe) | **Subir Foto** (Cámara/Galería) |
+| **Rutas**      | Ruta inteligente hacia pendientes  | Trazado de rutas de prueba      |
+| **Perfil**     | Edición, Foto y Estadísticas       | Edición completa y Gestión      |
+| **Ranking**    | Acceso al **Top 10 Global**        | Visualización (sin participar)  |
 
 ---
 
@@ -60,23 +60,24 @@ Arquitectura escalable basada en **Flutter** y servicios en la nube.
 
 ### 📱 Frontend & Plugins
 
-| Paquete | Función Principal |
-| :--- | :--- |
-| `flutter_map` | Renderizado de mapas OpenStreetMap (Sin costos de API). |
-| `geolocator` | Rastreo de posición GPS en tiempo real. |
-| `sensors_plus` | Acceso al Acelerómetro para la mecánica de juego. |
-| `image_picker` | Selección de fotos (Cámara/Galería) con parámetros de calidad. |
-| `permission_handler`| Gestión segura de permisos de Android. |
-| ´flutter_local_notifications´ | Manejo de notificaciones locales. |
+| Paquete                       | Función Principal                                              |
+|:------------------------------|:---------------------------------------------------------------|
+| `flutter_map`                 | Renderizado de mapas OpenStreetMap (Sin costos de API).        |
+| `geolocator`                  | Rastreo de posición GPS en tiempo real.                        |
+| `sensors_plus`                | Acceso al Acelerómetro para la mecánica de juego.              |
+| `image_picker`                | Selección de fotos (Cámara/Galería) con parámetros de calidad. |
+| `permission_handler`          | Gestión segura de permisos de Android.                         |
+| ´flutter_local_notifications´ | Manejo de notificaciones locales.                              |
+| `curved_navigation_bar`       | BottomNavigationBar                                            |
 
 ### 🔥 Backend (Firebase)
 
-| Servicio | Uso en GeoHunt |
-| :--- | :--- |
-| **Authentication** | Login tradicional y Google Sign-In con validación SHA-1. |
-| **Firestore BD** | Base de datos NoSQL. Índices compuestos para Leaderboards. |
-| **Storage** | Almacenamiento de imágenes de perfil optimizadas. |
-| **Messaging** | Envío de notificaciones push dinámicamente al usuario. |
+| Servicio           | Uso en GeoHunt                                                   |
+|:-------------------|:-----------------------------------------------------------------|
+| **Authentication** | Login tradicional y Google Sign-In con validación SHA-1.         |
+| **Firestore BD**   | Base de datos NoSQL. Índices compuestos para Leaderboards.       |
+| **Storage**        | Almacenamiento de imágenes de perfil optimizadas.                |
+| **Messaging**      | Envío de notificaciones push dinámicamente al usuario.           |
 
 ---
 

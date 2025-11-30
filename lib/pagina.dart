@@ -38,6 +38,9 @@ class WelcomeScreen extends StatefulWidget {
 }
 
 class _WelcomeScreenState extends State<WelcomeScreen> {
+  final GlobalKey<CurvedNavigationBarState> _bottomNavigationKey = GlobalKey();
+
+
   int _selectedIndex = 0;
   final String _currentUid = FirebaseAuth.instance.currentUser!.uid;
 
@@ -160,29 +163,39 @@ class _WelcomeScreenState extends State<WelcomeScreen> {
             ),
             child: _widgetOptions.elementAt(_selectedIndex),
           ),
-          bottomNavigationBar: Container(
-            decoration: BoxDecoration(
-              color: Colors.white,
-              boxShadow: [BoxShadow(color: Colors.black12, blurRadius: 8)],
-              borderRadius: const BorderRadius.only(
-                topLeft: Radius.circular(18),
-                topRight: Radius.circular(18),
+          bottomNavigationBar: CurvedNavigationBar(
+            key: _bottomNavigationKey,
+            index: _selectedIndex,
+            backgroundColor: Colors.transparent, //COLOR DE FONDO
+            buttonBackgroundColor: Colors.white, //COLOR CIRCULAR DEL ICONO
+            color: Colors.deepPurple, //COLOR DE LA BARRA
+            animationCurve: Curves.linear,
+            animationDuration: Duration(milliseconds: 300),
+            height: 50,
+            items: [
+              Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Icon(Icons.map, color: Colors.white70),
+                  Text('Cazar', style: TextStyle(color: Colors.white70, fontSize: 9)),
+                ],
               ),
-            ),
-            child: BottomNavigationBar(
-              items: const <BottomNavigationBarItem>[
-                BottomNavigationBarItem(icon: Icon(Icons.map), label: 'Cazar'),
-                BottomNavigationBarItem(icon: Icon(Icons.emoji_events), label: 'Top 10'),
-                BottomNavigationBarItem(icon: Icon(Icons.person), label: 'Perfil'),
-              ],
-              currentIndex: _selectedIndex,
-              selectedItemColor: secondaryColor,
-              unselectedItemColor: Colors.grey,
-              onTap: _onItemTapped,
-              backgroundColor: Colors.white,
-              elevation: 0,
-              type: BottomNavigationBarType.fixed,
-            ),
+              Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Icon(Icons.emoji_events, color: Colors.white70),
+                  Text('Top 10', style: TextStyle(color: Colors.white70, fontSize: 10)),
+                ],
+              ),
+              Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Icon(Icons.person, color: Colors.white70),
+                  Text('Perfil', style: TextStyle(color: Colors.white70, fontSize: 10)),
+                ],
+              ),
+            ],
+            onTap: _onItemTapped,
           ),
         );
       },
@@ -644,9 +657,43 @@ class _UserMapViewState extends State<UserMapView> {
 // VISTA 2: TOP 10 LEADERBOARD
 // ---------------------------------------------------------------------------
 class LeaderboardView extends StatelessWidget {
+  Color getRankColor(int index, bool me) {
+    if (me) return Colors.blue.shade300;
+    if (index == 0) return Color(0xFFFFF3C4); // Oro suave
+    if (index == 1) return Color(0xFFF0F0F0); // Plata suave
+    if (index == 2) return Color(0xFFCE8C4E);       // Bronce
+    return Colors.white;                            // Resto
+  }
+
+  // Widget para mostrar el número o la medalla
+  Widget getRankWidget(int index) {
+    if (index == 0) return Text("🥇", style: TextStyle(fontSize: 24));
+    if (index == 1) return Text("🥈", style: TextStyle(fontSize: 24));
+    if (index == 2) return Text("🥉", style: TextStyle(fontSize: 24));
+
+    // Para el puesto 4 en adelante, un círculo gris con el número
+    return Container(
+      width: 24,
+      height: 24,
+      alignment: Alignment.center,
+      decoration: BoxDecoration(
+        shape: BoxShape.circle,
+        border: Border.all(color: Colors.grey.shade400),
+      ),
+      child: Text(
+        "${index + 1}",
+        style: TextStyle(fontWeight: FontWeight.bold,
+            color: Colors.grey.shade600,
+            fontSize: 12),
+      ),
+    );
+  }
   const LeaderboardView({super.key});
   @override
   Widget build(BuildContext context) {
+
+    final String? currentUid = FirebaseAuth.instance.currentUser?.uid;
+
     return Container(
       decoration: BoxDecoration(
         color: cardColor,
@@ -678,27 +725,78 @@ class LeaderboardView extends StatelessWidget {
                   itemCount: snapshot.data!.docs.length,
                   itemBuilder: (context, index) {
                     final data = snapshot.data!.docs[index].data() as Map<String, dynamic>;
+                    final bool userLogged = (snapshot.data!.docs[index].id == currentUid);
                     return Card(
-                      color: Colors.white,
-                      elevation: 3,
+                      color: getRankColor(index, userLogged),
+                      elevation: index<3 ? 4 : 1,
                       margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
-                      child: ListTile(
-                        leading: CircleAvatar(
-                          backgroundColor: accentColor,
-                          backgroundImage: data['profileImageUrl'] != null ? NetworkImage(data['profileImageUrl']) : null,
-                          child: data['profileImageUrl'] == null ? Text(data['username']?[0] ?? '?', style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold)) : null,
-                        ),
-                        title: Text(data['username'] ?? 'Anónimo', style: const TextStyle(fontWeight: FontWeight.w600, color: Color(0xFF333333))),
-                        trailing: Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-                          decoration: BoxDecoration(
-                            color: secondaryColor,
-                            borderRadius: BorderRadius.circular(12),
-                          ),
-                          child: Text("${data['score'] ?? 0} pts", style: const TextStyle(fontWeight: FontWeight.bold, color: Colors.white)),
-                        ),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(14),
+                        side: userLogged
+                            ? const BorderSide(color: Colors.purple, width: 3) // Borde más grueso si es el usuario logueado
+                            : BorderSide.none, // Sin borde para los demás
                       ),
+                        child: ListTile(
+                          // SECCIÓN IZQUIERDA: PUESTO + AVATAR
+                          leading: SizedBox(
+                            width: 80,
+                            child: Row(
+                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                              children: [
+                                // 1. El Widget del Puesto (Medalla o Número)
+                                getRankWidget(index),
+
+                                // 2. El Avatar con Borde de Color
+                                Container(
+                                  padding: const EdgeInsets.all(2), // Grosor del borde
+                                  decoration: BoxDecoration(
+                                    shape: BoxShape.circle,
+                                    color: index<3 ? getRankColor(index, userLogged) : Colors.transparent, // Color del borde
+                                  ),
+                                  child: CircleAvatar(
+                                    radius: 20,
+                                    backgroundColor: Colors.grey.shade200,
+                                    backgroundImage: data['profileImageUrl'] != null
+                                        ? NetworkImage(data['profileImageUrl'])
+                                        : null,
+                                    child: data['profileImageUrl'] == null
+                                        ? Text(data['username']?[0] ?? '?',
+                                        style: TextStyle(
+                                            color: Colors.grey.shade700, fontWeight: FontWeight.bold))
+                                        : null,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+
+                          // SECCIÓN CENTRAL: NOMBRE
+                          title: Text(
+                            data['username'] ?? 'Anónimo',
+                            style: TextStyle(
+                              fontWeight: index<3 ? FontWeight.bold : FontWeight.w600,
+                              fontSize: index<3 ? 18 : 16, // Más grande para top 3
+                              color: const Color(0xFF333333),
+                            ),
+                          ),
+
+                          // SECCIÓN DERECHA: PUNTOS
+                          trailing: Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                            decoration: BoxDecoration(
+                              // Si es Top 3, usa el color de su medalla, si no, el color secundario por defecto
+                              color: index<3 ? getRankColor(index, userLogged) : Color(0xFF8992D7),
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                            child: Text(
+                              "${data['score'] ?? 0}",
+                              style: TextStyle(
+                                fontWeight: FontWeight.bold,
+                                color: index<3 ? Colors.black87 : Colors.white,
+                              ),
+                            ),
+                          ),
+                        ),
                     );
                   },
                 );
