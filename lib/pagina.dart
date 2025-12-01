@@ -14,14 +14,13 @@ import 'package:sensors_plus/sensors_plus.dart'; // IMPORTANTE: Sensores
 import 'package:vibration/vibration.dart';
 import 'database_service.dart';
 import 'fcm_service.dart';
-import 'package:sensors_plus/sensors_plus.dart';
-import 'package:curved_navigation_bar/curved_navigation_bar.dart';
 
 import 'login.dart';
 import 'notificaciones.dart';
 import 'user.dart';
 import 'tesoro.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
+import 'package:curved_navigation_bar/curved_navigation_bar.dart';
 
 // Paleta de colores global
 const Color primaryColor = Color(0xFF91B1A8);
@@ -41,7 +40,6 @@ class WelcomeScreen extends StatefulWidget {
 class _WelcomeScreenState extends State<WelcomeScreen> {
   final GlobalKey<CurvedNavigationBarState> _bottomNavigationKey = GlobalKey();
 
-
   int _selectedIndex = 0;
   final String _currentUid = FirebaseAuth.instance.currentUser!.uid;
 
@@ -52,29 +50,21 @@ class _WelcomeScreenState extends State<WelcomeScreen> {
 
     String? token = await FirebaseMessaging.instance.getToken();
     if (token != null) {
-      await dbService.updateUser(uid, {
-        'fcmToken': token,
-      });
+      await dbService.updateUser(uid, {'fcmToken': token});
     }
-     Position position = await Geolocator.getCurrentPosition();
-  GeoPoint location = GeoPoint(position.latitude, position.longitude);
-  await dbService.updateUser(uid, {
-    'lastKnownLocation': location,
-  });
-
+    Position position = await Geolocator.getCurrentPosition();
+    GeoPoint location = GeoPoint(position.latitude, position.longitude);
+    await dbService.updateUser(uid, {'lastKnownLocation': location});
   }
 
   void _initFCMListeners() {
-
     FirebaseMessaging.onMessage.listen((RemoteMessage message) {
       print("🔔 Notificación recibida en Primer Plano: ${message.data}");
 
       String titulo = message.notification?.title ?? 'Alerta GeoHunt';
       String cuerpo = message.notification?.body ?? '¡Hay un tesoro cerca!';
 
-
       bool isLimited = message.data['isLimitedTime'] == 'true';
-
 
       DateTime? fechaLimite;
 
@@ -87,22 +77,17 @@ class _WelcomeScreenState extends State<WelcomeScreen> {
           print("⚠️ Error parseando fecha limite: $e");
         }
       }
-      mostrarNotificacion(
-          titulo,
-          cuerpo,
-          'tesoro',
-          fechaLimite: fechaLimite
-      );
+      mostrarNotificacion(titulo, cuerpo, 'tesoro', fechaLimite: fechaLimite);
     });
-
 
     FirebaseMessaging.onMessageOpenedApp.listen((RemoteMessage message) {
       print('👆 Usuario tocó la notificación (Background)');
       // Aquí puedes agregar lógica para navegar al mapa y centrar el tesoro
     });
 
-
-    FirebaseMessaging.instance.getInitialMessage().then((RemoteMessage? message) {
+    FirebaseMessaging.instance.getInitialMessage().then((
+      RemoteMessage? message,
+    ) {
       if (message != null) {
         print('App iniciada desde notificación (Terminated): ${message.data}');
       }
@@ -110,8 +95,11 @@ class _WelcomeScreenState extends State<WelcomeScreen> {
   }
 
   void _onItemTapped(int index) {
-    setState(() { _selectedIndex = index; });
+    setState(() {
+      _selectedIndex = index;
+    });
   }
+
   final FCMService _fcmService = FCMService();
 
   @override
@@ -125,9 +113,15 @@ class _WelcomeScreenState extends State<WelcomeScreen> {
   @override
   Widget build(BuildContext context) {
     return StreamBuilder<DocumentSnapshot>(
-      stream: FirebaseFirestore.instance.collection('users').doc(_currentUid).snapshots(),
+      stream: FirebaseFirestore.instance
+          .collection('users')
+          .doc(_currentUid)
+          .snapshots(),
       builder: (context, snapshot) {
-        if (!snapshot.hasData) return const Scaffold(body: Center(child: CircularProgressIndicator()));
+        if (!snapshot.hasData)
+          return const Scaffold(
+            body: Center(child: CircularProgressIndicator()),
+          );
 
         final data = snapshot.data!.data() as Map<String, dynamic>;
         UserModel currentUser = UserModel.fromMap(data, _currentUid);
@@ -141,7 +135,14 @@ class _WelcomeScreenState extends State<WelcomeScreen> {
         return Scaffold(
           backgroundColor: backgroundColor,
           appBar: AppBar(
-            title: const Text('GeoHunt Explorador', style: TextStyle(fontWeight: FontWeight.bold, color: Colors.white, fontSize: 22)),
+            title: const Text(
+              'GeoHunt Explorador',
+              style: TextStyle(
+                fontWeight: FontWeight.bold,
+                color: Colors.white,
+                fontSize: 22,
+              ),
+            ),
             backgroundColor: primaryColor,
             elevation: 4,
             actions: [
@@ -149,9 +150,13 @@ class _WelcomeScreenState extends State<WelcomeScreen> {
                 icon: const Icon(Icons.exit_to_app, color: Colors.white),
                 onPressed: () async {
                   await FirebaseAuth.instance.signOut();
-                  if (mounted) Navigator.of(context).pushAndRemoveUntil(MaterialPageRoute(builder: (context) => const Login()), (route) => false);
+                  if (mounted)
+                    Navigator.of(context).pushAndRemoveUntil(
+                      MaterialPageRoute(builder: (context) => const Login()),
+                      (route) => false,
+                    );
                 },
-              )
+              ),
             ],
           ),
           body: Container(
@@ -164,42 +169,47 @@ class _WelcomeScreenState extends State<WelcomeScreen> {
             ),
             child: _widgetOptions.elementAt(_selectedIndex),
           ),
-          bottomNavigationBar: CurvedNavigationBar(
-            key: _bottomNavigationKey,
-            index: _selectedIndex,
-            backgroundColor: Colors.transparent, //COLOR DE FONDO
-            buttonBackgroundColor: Colors.white, //COLOR CIRCULAR DEL ICONO
-            color: Colors.deepPurple, //COLOR DE LA BARRA
-            animationCurve: Curves.linear,
-            animationDuration: Duration(milliseconds: 300),
-            height: 50,
-            items: [
-              Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Icon(Icons.map, color: Colors.white70),
-                  Text('Cazar', style: TextStyle(color: Colors.white70, fontSize: 9)),
-                ],
-              ),
-              Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Icon(Icons.emoji_events, color: Colors.white70),
-                  Text('Top 10', style: TextStyle(color: Colors.white70, fontSize: 10)),
-                ],
-              ),
-              Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Icon(Icons.person, color: Colors.white70),
-                  Text('Perfil', style: TextStyle(color: Colors.white70, fontSize: 10)),
-                ],
-              ),
-            ],
-            onTap: _onItemTapped,
+          bottomNavigationBar: Padding(
+            padding: EdgeInsets.only(top: 20),
+            child: CurvedNavigationBar(
+              key: _bottomNavigationKey,
+              index: _selectedIndex,
+              backgroundColor: Colors.transparent, //COLOR DE FONDO
+              buttonBackgroundColor: secondaryColor, //COLOR CIRCULAR DEL ICONO
+              color: secondaryColor, //COLOR DE LA BARRA
+              animationCurve: Curves.easeInOut,
+              animationDuration: Duration(milliseconds: 400),
+              height: 65,
+              items: [
+                _buildNavItem(Icons.map, 'Cazar', 0),
+                _buildNavItem(Icons.emoji_events, 'Top 10', 1),
+                _buildNavItem(Icons.person, 'Perfil', 2),
+              ],
+              onTap: _onItemTapped,
+            ),
           ),
         );
       },
+    );
+  }
+
+  Widget _buildNavItem(IconData icon, String label, int index) {
+    final bool isSelected = _selectedIndex == index;
+
+    return Column(
+      mainAxisAlignment: MainAxisAlignment.center,
+      children: [
+        Icon(icon, size: isSelected ? 32 : 26, color: Colors.white),
+
+        Text(
+          label,
+          style: TextStyle(
+            color: Colors.white,
+            fontSize: 10,
+            fontWeight: FontWeight.bold,
+          ),
+        ),
+      ],
     );
   }
 }
@@ -226,7 +236,8 @@ class _UserMapViewState extends State<UserMapView> {
 
   StreamSubscription<Position>? _positionStream;
   StreamSubscription? _accelerometerSubscription;
-  StreamSubscription<QuerySnapshot>? _treasuresSubscription; // Para escuchar los tesoros
+  StreamSubscription<QuerySnapshot>?
+  _treasuresSubscription; // Para escuchar los tesoros
   List<TreasureModel> _allTreasures = []; // Guardamos los tesoros aquí
   TreasureModel? _treasureInRange;
   bool _isClaiming = false;
@@ -247,19 +258,33 @@ class _UserMapViewState extends State<UserMapView> {
   }
 
   void _listenToTreasures() {
-    _treasuresSubscription = FirebaseFirestore.instance.collection('treasures').snapshots().listen((snapshot) {
-      if (mounted) {
-        setState(() {
-          _allTreasures = snapshot.docs.map((d) => TreasureModel.fromMap(d.data() as Map<String, dynamic>, d.id)).toList();
+    _treasuresSubscription = FirebaseFirestore.instance
+        .collection('treasures')
+        .snapshots()
+        .listen((snapshot) {
+          if (mounted) {
+            setState(() {
+              _allTreasures = snapshot.docs
+                  .map(
+                    (d) => TreasureModel.fromMap(
+                      d.data() as Map<String, dynamic>,
+                      d.id,
+                    ),
+                  )
+                  .toList();
+            });
+          }
         });
-      }
-    });
   }
 
   // --- 1. SENSOR SHAKE ---
   void _initSensor() {
-    _accelerometerSubscription = userAccelerometerEvents.listen((UserAccelerometerEvent event) {
-      double acceleration = sqrt(event.x * event.x + event.y * event.y + event.z * event.z);
+    _accelerometerSubscription = userAccelerometerEvents.listen((
+      UserAccelerometerEvent event,
+    ) {
+      double acceleration = sqrt(
+        event.x * event.x + event.y * event.y + event.z * event.z,
+      );
       if (acceleration > 15) {
         _onShakeDetected();
       }
@@ -280,12 +305,17 @@ class _UserMapViewState extends State<UserMapView> {
     });
     try {
       // Referencias
-      final userRef = FirebaseFirestore.instance.collection('users').doc(widget.user.uid);
-      final treasureRef = FirebaseFirestore.instance.collection('treasures').doc(treasure.id);
+      final userRef = FirebaseFirestore.instance
+          .collection('users')
+          .doc(widget.user.uid);
+      final treasureRef = FirebaseFirestore.instance
+          .collection('treasures')
+          .doc(treasure.id);
 
       // Esto asegura que la operación sea atómica y verifique el estado real del servidor
-      int pointsAwarded = await FirebaseFirestore.instance.runTransaction((transaction) async {
-
+      int pointsAwarded = await FirebaseFirestore.instance.runTransaction((
+        transaction,
+      ) async {
         DocumentSnapshot snapshot = await transaction.get(treasureRef);
 
         if (!snapshot.exists) {
@@ -293,26 +323,26 @@ class _UserMapViewState extends State<UserMapView> {
         }
 
         // En lugar de leer campo por campo manualmente, usamos tu factory 'fromMap'.
-        // Esto convierte automáticamente los Timestamps a DateTime gracias a tu modelo.
+        // Convirtiendo automáticamente los Timestamps a DateTime.
         final freshTreasure = TreasureModel.fromMap(
-            snapshot.data() as Map<String, dynamic>,
-            snapshot.id
+          snapshot.data() as Map<String, dynamic>,
+          snapshot.id,
         );
 
         int pointsToAdd = 0;
-    switch (freshTreasure.difficulty) {
-      case 'Fácil':
-        pointsToAdd = 100;
-        break;
-      case 'Medio':
-        pointsToAdd = 300;
-        break;
-      case 'Difícil':
-        pointsToAdd = 500;
-        break;
-      default:
-        pointsToAdd = 100;
-    }
+        switch (freshTreasure.difficulty) {
+          case 'Fácil':
+            pointsToAdd = 100;
+            break;
+          case 'Medio':
+            pointsToAdd = 300;
+            break;
+          case 'Difícil':
+            pointsToAdd = 500;
+            break;
+          default:
+            pointsToAdd = 100;
+        }
 
         // Lógica de Tiempo Límite (Usando el DateTime ya convertido del modelo)
         if (freshTreasure.isLimitedTime && freshTreasure.limitedUntil != null) {
@@ -341,16 +371,16 @@ class _UserMapViewState extends State<UserMapView> {
               children: [
                 const Icon(Icons.verified, color: Colors.green, size: 60),
                 const SizedBox(height: 10),
-                Text('Has ganado $pointsAwarded puntos.'), // Usamos la variable retornada
+                Text(
+                  'Has ganado $pointsAwarded puntos.',
+                ), // Usamos la variable retornada
                 Text('Tesoro: ${treasure.title}'),
-                // Nota: Aquí podrías simplificar el mensaje ya que la lógica fue interna
               ],
             ),
             actions: [
               TextButton(
                 onPressed: () {
                   Navigator.pop(ctx);
-                  // Opcional: Refrescar el mapa aquí
                 },
                 child: const Text('¡Genial!'),
               ),
@@ -358,7 +388,6 @@ class _UserMapViewState extends State<UserMapView> {
           ),
         );
       }
-
     } catch (e) {
       // --- ERROR (Tesoro borrado o error de red) ---
       if (mounted) {
@@ -366,9 +395,14 @@ class _UserMapViewState extends State<UserMapView> {
           context: context,
           builder: (ctx) => AlertDialog(
             title: const Text('Se te acabó el tiempo. Suerte para la próxima'),
-            content: Text(e.toString().replaceAll("Exception: ", "")), // Limpiar mensaje
+            content: Text(
+              e.toString().replaceAll("Exception: ", ""),
+            ),
             actions: [
-              TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('Entendido')),
+              TextButton(
+                onPressed: () => Navigator.pop(ctx),
+                child: const Text('Entendido'),
+              ),
             ],
           ),
         );
@@ -398,75 +432,83 @@ class _UserMapViewState extends State<UserMapView> {
 
   void _startListeningLocation() {
     const LocationSettings locationSettings = LocationSettings(
-        accuracy: LocationAccuracy.bestForNavigation,
-        distanceFilter: 2
+      accuracy: LocationAccuracy.bestForNavigation,
+      distanceFilter: 2,
     );
 
-    _positionStream = Geolocator.getPositionStream(
-        locationSettings: locationSettings
-    ).listen((pos) { // Se ejecuta CADA VEZ que el GPS reporta una nueva posición
-      if (mounted) {
-        final newPosition = LatLng(pos.latitude, pos.longitude);
+    _positionStream =
+        Geolocator.getPositionStream(
+          locationSettings: locationSettings,
+        ).listen((pos) {
+          // Se ejecuta CADA VEZ que el GPS reporta una nueva posición
+          if (mounted) {
+            final newPosition = LatLng(pos.latitude, pos.longitude);
 
-        final uncollected = _allTreasures.where((t) => !(widget.user.foundTreasures?.contains(t.id) ?? false)).toList();
-        TreasureModel? foundInRange;
+            final uncollected = _allTreasures
+                .where(
+                  (t) => !(widget.user.foundTreasures?.contains(t.id) ?? false),
+                )
+                .toList();
+            TreasureModel? foundInRange;
 
-        for (var t in uncollected) {
-          final double dist = _distanceCalculator.as(LengthUnit.Meter, newPosition, LatLng(t.location.latitude, t.location.longitude));
-          if (dist <= 5) { // Si un tesoro está en el rango de 5 metros
-            foundInRange = t;
-            break;
-          }
-        }
-
-        // Comprobamos si el tesoro en rango ha cambiado
-        if (foundInRange?.id != _treasureInRange?.id) {
-
-          if (foundInRange != null) {
-            _vibratePhone();
-
-            // 1. Verificamos si es temporal Y si la fecha es válida
-            if (foundInRange!.isLimitedTime && foundInRange!.limitedUntil != null) {
-
-              // CASO A: Tesoro con Tiempo Límite ⏳
-              // Le pasamos la fecha para que Android muestre el cronómetro
-              mostrarNotificacion(
-                  '¡CORRE! Tesoro Temporal ⏳',
-                  'Se acaba el tiempo. ¡Agita rápido para reclamar!',
-                  'tesoro',
-                  fechaLimite: foundInRange!.limitedUntil // <--- Pasamos la fecha aquí
+            for (var t in uncollected) {
+              final double dist = _distanceCalculator.as(
+                LengthUnit.Meter,
+                newPosition,
+                LatLng(t.location.latitude, t.location.longitude),
               );
-
-            } else {
-
-              // CASO B: Tesoro Normal 🟢
-              // No pasamos fecha, así que no mostrará cronómetro
-              mostrarNotificacion(
-                '¡Tesoro cerca! 🟢',
-                'Agita tu teléfono para reclamar el tesoro',
-                'tesoro',
-              );
-
+              if (dist <= 5) {
+                // Si un tesoro está en el rango de 5 metros
+                foundInRange = t;
+                break;
+              }
             }
-          }
-          setState(() {
-            _treasureInRange = foundInRange;
-          });
-        }
 
-        // Actualizamos la posición del usuario en el mapa y en la BD
-        setState(() {
-          _currentPosition = newPosition;
+            // Comprobamos si el tesoro en rango ha cambiado
+            if (foundInRange?.id != _treasureInRange?.id) {
+              if (foundInRange != null) {
+                _vibratePhone();
+
+                // 1. Verificamos si es temporal Y si la fecha es válida
+                if (foundInRange!.isLimitedTime &&
+                    foundInRange!.limitedUntil != null) {
+                  // CASO A: Tesoro con Tiempo Límite ⏳
+                  // Le pasamos la fecha para que Android muestre el cronómetro
+                  mostrarNotificacion(
+                    '¡CORRE! Tesoro Temporal ⏳',
+                    'Se acaba el tiempo. ¡Agita rápido para reclamar!',
+                    'tesoro',
+                    fechaLimite: foundInRange!
+                        .limitedUntil, // <--- Pasamos la fecha aquí
+                  );
+                } else {
+                  // CASO B: Tesoro Normal 🟢
+                  // No pasamos fecha, así que no mostrará cronómetro
+                  mostrarNotificacion(
+                    '¡Tesoro cerca! 🟢',
+                    'Agita tu teléfono para reclamar el tesoro',
+                    'tesoro',
+                  );
+                }
+              }
+              setState(() {
+                _treasureInRange = foundInRange;
+              });
+            }
+
+            // Actualizamos la posición del usuario en el mapa y en la BD
+            setState(() {
+              _currentPosition = newPosition;
+            });
+            _saveLastKnownLocation(pos);
+          }
         });
-        _saveLastKnownLocation(pos);
-      }
-    });
   }
 
   void _saveLastKnownLocation(Position position) {
     // 1. Convertir la posición de Geolocator a un GeoPoint de Firestore
     final GeoPoint geoPoint = GeoPoint(position.latitude, position.longitude);
-    // 2. Usar el nuevo método updateUser para actualizar SOLO este campo
+    // 2. Usar el nuevo metodo updateUser para actualizar SOLO este campo
     _dbService.updateUser(
       widget.user.uid,
       // Solo actualiza 'lastKnownLocation'
@@ -478,23 +520,48 @@ class _UserMapViewState extends State<UserMapView> {
     if (_currentPosition != null) _mapController.move(_currentPosition!, 18);
   }
 
-  // Ruta optimizada: Solo considera los NO encontrados para guiarte
-  List<LatLng> _calculateOptimizedRoute(List<TreasureModel> uncollectedTreasures) {
+  // Solo considera los NO encontrados para guiarte
+  List<LatLng> _calculateOptimizedRoute(
+    List<TreasureModel> uncollectedTreasures,
+  ) {
     if (_currentPosition == null) return [];
-    List<TreasureModel> nearby = uncollectedTreasures.where((t) => _distanceCalculator.as(LengthUnit.Meter, _currentPosition!, LatLng(t.location.latitude, t.location.longitude)) <= 200).toList();
+    List<TreasureModel> nearby = uncollectedTreasures
+        .where(
+          (t) =>
+              _distanceCalculator.as(
+                LengthUnit.Meter,
+                _currentPosition!,
+                LatLng(t.location.latitude, t.location.longitude),
+              ) <=
+              200,
+        )
+        .toList();
     if (nearby.isEmpty) return [];
     List<LatLng> path = [_currentPosition!];
     LatLng current = _currentPosition!;
     List<TreasureModel> pending = List.from(nearby);
     while (pending.isNotEmpty) {
-      TreasureModel? nearest; double minD = double.infinity;
+      TreasureModel? nearest;
+      double minD = double.infinity;
       for (var t in pending) {
-        double d = _distanceCalculator.as(LengthUnit.Meter, current, LatLng(t.location.latitude, t.location.longitude));
-        if (d < minD) { minD = d; nearest = t; }
+        double d = _distanceCalculator.as(
+          LengthUnit.Meter,
+          current,
+          LatLng(t.location.latitude, t.location.longitude),
+        );
+        if (d < minD) {
+          minD = d;
+          nearest = t;
+        }
       }
       if (nearest != null) {
-        LatLng p = LatLng(nearest.location.latitude, nearest.location.longitude);
-        path.add(p); current = p; pending.remove(nearest);
+        LatLng p = LatLng(
+          nearest.location.latitude,
+          nearest.location.longitude,
+        );
+        path.add(p);
+        current = p;
+        pending.remove(nearest);
       }
     }
     return path;
@@ -516,7 +583,12 @@ class _UserMapViewState extends State<UserMapView> {
                 padding: const EdgeInsets.only(bottom: 10),
                 child: ClipRRect(
                   borderRadius: BorderRadius.circular(8),
-                  child: Image.network(t.imageUrl!, height: 150, width: double.infinity, fit: BoxFit.cover),
+                  child: Image.network(
+                    t.imageUrl!,
+                    height: 150,
+                    width: double.infinity,
+                    fit: BoxFit.cover,
+                  ),
                 ),
               ),
 
@@ -524,14 +596,32 @@ class _UserMapViewState extends State<UserMapView> {
             const SizedBox(height: 10),
 
             if (isFound)
-              const Chip(label: Text("YA ENCONTRADO"), backgroundColor: Colors.grey, labelStyle: TextStyle(color: Colors.white))
+              const Chip(
+                label: Text("YA ENCONTRADO"),
+                backgroundColor: Colors.grey,
+                labelStyle: TextStyle(color: Colors.white),
+              )
             else
-              Chip(label: Text(t.difficulty), backgroundColor: t.difficulty == 'Difícil' ? Colors.red[100] : Colors.green[100]),
+              Chip(
+                label: Text(t.difficulty),
+                backgroundColor: t.difficulty == 'Difícil'
+                    ? Colors.red[100]
+                    : Colors.green[100],
+              ),
 
-            if (t.isLimitedTime) const Chip(label: Text('¡Tiempo Limitado!'), backgroundColor: Colors.orangeAccent),
+            if (t.isLimitedTime)
+              const Chip(
+                label: Text('¡Tiempo Limitado!'),
+                backgroundColor: Colors.orangeAccent,
+              ),
           ],
         ),
-        actions: [TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('Cerrar'))],
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx),
+            child: const Text('Cerrar'),
+          ),
+        ],
       ),
     );
   }
@@ -554,23 +644,27 @@ class _UserMapViewState extends State<UserMapView> {
 
   @override
   Widget build(BuildContext context) {
-
     List<Marker> markers = [];
     List<LatLng> routePoints = [];
 
-    // Lógica que estaba en el builder, ahora usa el estado local
-    final uncollectedTreasures = _allTreasures.where((t) => !(widget.user.foundTreasures?.contains(t.id) ?? false)).toList();
+    final uncollectedTreasures = _allTreasures
+        .where((t) => !(widget.user.foundTreasures?.contains(t.id) ?? false))
+        .toList();
 
     markers = _allTreasures.map((t) {
       bool isFound = widget.user.foundTreasures?.contains(t.id) ?? false;
       Color markerColor;
-      if (isFound) markerColor = Colors.grey;
-      else if (t.id == _treasureInRange?.id) markerColor = Colors.green;
-      else markerColor = Colors.red;
+      if (isFound)
+        markerColor = Colors.grey;
+      else if (t.id == _treasureInRange?.id)
+        markerColor = Colors.green;
+      else
+        markerColor = Colors.red;
 
       return Marker(
         point: LatLng(t.location.latitude, t.location.longitude),
-        width: 60, height: 60,
+        width: 60,
+        height: 60,
         child: GestureDetector(
           onTap: () => _showTreasureDetails(t, isFound),
           child: Icon(Icons.location_on, color: markerColor, size: 50),
@@ -583,71 +677,116 @@ class _UserMapViewState extends State<UserMapView> {
     }
 
     if (_currentPosition != null) {
-      markers.add(Marker(
+      markers.add(
+        Marker(
           point: _currentPosition!,
-          width: 50, height: 50,
-          child: const Icon(Icons.person_pin_circle, color: Colors.blue, size: 40)
-      ));
+          width: 50,
+          height: 50,
+          child: const Icon(
+            Icons.person_pin_circle,
+            color: Colors.blue,
+            size: 40,
+          ),
+        ),
+      );
     }
 
     return Scaffold(
       floatingActionButton: Column(
-          mainAxisAlignment: MainAxisAlignment.end, children: [
-        FloatingActionButton(heroTag: "routeBtn",
+        mainAxisAlignment: MainAxisAlignment.end,
+        children: [
+          FloatingActionButton(
+            heroTag: "routeBtn",
             backgroundColor: _showRoute ? Colors.deepPurple : Colors.white,
             onPressed: () => setState(() => _showRoute = !_showRoute),
-            child: Icon(Icons.alt_route,
-                color: _showRoute ? Colors.white : Colors.deepPurple)),
-        const SizedBox(height: 10),
-        FloatingActionButton(heroTag: "gpsBtn",
+            child: Icon(
+              Icons.alt_route,
+              color: _showRoute ? Colors.white : Colors.deepPurple,
+            ),
+          ),
+          const SizedBox(height: 10),
+          FloatingActionButton(
+            heroTag: "gpsBtn",
             onPressed: _centerOnUser,
-            child: const Icon(Icons.my_location)),
-      ]),
-
+            child: const Icon(Icons.my_location),
+          ),
+        ],
+      ),
 
       body: Stack(
         children: [
           FlutterMap(
-          mapController: _mapController,
-          options: MapOptions(initialCenter: _tepicCenter, initialZoom: 14),
-          children: [
-            TileLayer(urlTemplate: 'https://tile.openstreetmap.org/{z}/{x}/{y}.png', userAgentPackageName: 'com.geohunt.app'),
-            if (_showRoute && routePoints.isNotEmpty) PolylineLayer(polylines: [Polyline(points: routePoints, strokeWidth: 5, color: Colors.deepPurple)]),
-            if (_treasureInRange != null) CircleLayer(circles: [
-              CircleMarker(
-                  point: LatLng(_treasureInRange!.location.latitude, _treasureInRange!.location.longitude),
-                  radius: 15, useRadiusInMeter: true, color: Colors.green.withOpacity(0.3),
-                  borderColor: Colors.green, borderStrokeWidth: 2
-              )
-            ]),
-            MarkerLayer(markers: markers),
-          ],
-    ),
+            mapController: _mapController,
+            options: MapOptions(initialCenter: _tepicCenter, initialZoom: 14),
+            children: [
+              TileLayer(
+                urlTemplate: 'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
+                userAgentPackageName: 'com.geohunt.app',
+              ),
+              if (_showRoute && routePoints.isNotEmpty)
+                PolylineLayer(
+                  polylines: [
+                    Polyline(
+                      points: routePoints,
+                      strokeWidth: 5,
+                      color: Colors.deepPurple,
+                    ),
+                  ],
+                ),
+              if (_treasureInRange != null)
+                CircleLayer(
+                  circles: [
+                    CircleMarker(
+                      point: LatLng(
+                        _treasureInRange!.location.latitude,
+                        _treasureInRange!.location.longitude,
+                      ),
+                      radius: 15,
+                      useRadiusInMeter: true,
+                      color: Colors.green.withOpacity(0.3),
+                      borderColor: Colors.green,
+                      borderStrokeWidth: 2,
+                    ),
+                  ],
+                ),
+              MarkerLayer(markers: markers),
+            ],
+          ),
           if (_treasureInRange != null)
             Positioned(
-              top: 50, left: 20, right: 20,
+              top: 50,
+              left: 20,
+              right: 20,
               child: Container(
                 padding: const EdgeInsets.all(15),
-                decoration: BoxDecoration(color: Colors.green,
-                    borderRadius: BorderRadius.circular(15),
-                    boxShadow: const [
-                      BoxShadow(color: Colors.black26, blurRadius: 10)
-                    ]),
+                decoration: BoxDecoration(
+                  color: Colors.green,
+                  borderRadius: BorderRadius.circular(15),
+                  boxShadow: const [
+                    BoxShadow(color: Colors.black26, blurRadius: 10),
+                  ],
+                ),
                 child: Column(
                   children: [
-                    const Text("¡LISTO PARA CAZAR!", style: TextStyle(
+                    const Text(
+                      "¡LISTO PARA CAZAR!",
+                      style: TextStyle(
                         color: Colors.white,
                         fontWeight: FontWeight.bold,
-                        fontSize: 18)),
+                        fontSize: 18,
+                      ),
+                    ),
                     const SizedBox(height: 5),
-                    Text("Agita tu teléfono para reclamar: ${_treasureInRange!
-                        .title}", style: const TextStyle(color: Colors.white),
-                        textAlign: TextAlign.center),
-                    const Icon(Icons.vibration, color: Colors.white, size: 40)
+                    Text(
+                      "Agita tu teléfono para reclamar: ${_treasureInRange!.title}",
+                      style: const TextStyle(color: Colors.white),
+                      textAlign: TextAlign.center,
+                    ),
+                    const Icon(Icons.vibration, color: Colors.white, size: 40),
                   ],
                 ),
               ),
-            )
+            ),
         ],
       ),
     );
@@ -662,8 +801,8 @@ class LeaderboardView extends StatelessWidget {
     if (me) return Colors.blue.shade300;
     if (index == 0) return Color(0xFFFFF3C4); // Oro suave
     if (index == 1) return Color(0xFFF0F0F0); // Plata suave
-    if (index == 2) return Color(0xFFCE8C4E);       // Bronce
-    return Colors.white;                            // Resto
+    if (index == 2) return Color(0xFFCE8C4E); // Bronce
+    return Colors.white; // Resto
   }
 
   // Widget para mostrar el número o la medalla
@@ -683,16 +822,18 @@ class LeaderboardView extends StatelessWidget {
       ),
       child: Text(
         "${index + 1}",
-        style: TextStyle(fontWeight: FontWeight.bold,
-            color: Colors.grey.shade600,
-            fontSize: 12),
+        style: TextStyle(
+          fontWeight: FontWeight.bold,
+          color: Colors.grey.shade600,
+          fontSize: 12,
+        ),
       ),
     );
   }
+
   const LeaderboardView({super.key});
   @override
   Widget build(BuildContext context) {
-
     final String? currentUid = FirebaseAuth.instance.currentUser?.uid;
 
     return Container(
@@ -714,90 +855,133 @@ class LeaderboardView extends StatelessWidget {
               ),
             ),
             width: double.infinity,
-            child: const Text("🏆 Mejores Cazadores", textAlign: TextAlign.center, style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold, color: Colors.white, letterSpacing: 1.2)),
+            child: const Text(
+              "🏆 Mejores Cazadores",
+              textAlign: TextAlign.center,
+              style: TextStyle(
+                fontSize: 24,
+                fontWeight: FontWeight.bold,
+                color: Colors.white,
+                letterSpacing: 1.2,
+              ),
+            ),
           ),
           Expanded(
             child: StreamBuilder<QuerySnapshot>(
-              stream: FirebaseFirestore.instance.collection('users').where('role', isEqualTo: 'user').orderBy('score', descending: true).limit(10).snapshots(),
+              stream: FirebaseFirestore.instance
+                  .collection('users')
+                  .where('role', isEqualTo: 'user')
+                  .orderBy('score', descending: true)
+                  .limit(10)
+                  .snapshots(),
               builder: (context, snapshot) {
-                if (!snapshot.hasData) return const Center(child: CircularProgressIndicator());
-                if (snapshot.data!.docs.isEmpty) return const Center(child: Text("Aún no hay jugadores."));
+                if (!snapshot.hasData)
+                  return const Center(child: CircularProgressIndicator());
+                if (snapshot.data!.docs.isEmpty)
+                  return const Center(child: Text("Aún no hay jugadores."));
                 return ListView.builder(
                   itemCount: snapshot.data!.docs.length,
                   itemBuilder: (context, index) {
-                    final data = snapshot.data!.docs[index].data() as Map<String, dynamic>;
-                    final bool userLogged = (snapshot.data!.docs[index].id == currentUid);
+                    final data =
+                        snapshot.data!.docs[index].data()
+                            as Map<String, dynamic>;
+                    final bool userLogged =
+                        (snapshot.data!.docs[index].id == currentUid);
                     return Card(
                       color: getRankColor(index, userLogged),
-                      elevation: index<3 ? 4 : 1,
-                      margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                      elevation: index < 3 ? 4 : 1,
+                      margin: const EdgeInsets.symmetric(
+                        horizontal: 16,
+                        vertical: 8,
+                      ),
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(14),
                         side: userLogged
-                            ? const BorderSide(color: Colors.purple, width: 3) // Borde más grueso si es el usuario logueado
+                            ? const BorderSide(
+                                color: Colors.purple,
+                                width: 3,
+                              ) // Borde más grueso si es el usuario logueado
                             : BorderSide.none, // Sin borde para los demás
                       ),
-                        child: ListTile(
-                          // SECCIÓN IZQUIERDA: PUESTO + AVATAR
-                          leading: SizedBox(
-                            width: 80,
-                            child: Row(
-                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                              children: [
-                                // 1. El Widget del Puesto (Medalla o Número)
-                                getRankWidget(index),
+                      child: ListTile(
+                        // SECCIÓN IZQUIERDA: PUESTO + AVATAR
+                        leading: SizedBox(
+                          width: 80,
+                          child: Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            children: [
+                              // 1. El Widget del Puesto (Medalla o Número)
+                              getRankWidget(index),
 
-                                // 2. El Avatar con Borde de Color
-                                Container(
-                                  padding: const EdgeInsets.all(2), // Grosor del borde
-                                  decoration: BoxDecoration(
-                                    shape: BoxShape.circle,
-                                    color: index<3 ? getRankColor(index, userLogged) : Colors.transparent, // Color del borde
-                                  ),
-                                  child: CircleAvatar(
-                                    radius: 20,
-                                    backgroundColor: Colors.grey.shade200,
-                                    backgroundImage: data['profileImageUrl'] != null
-                                        ? NetworkImage(data['profileImageUrl'])
-                                        : null,
-                                    child: data['profileImageUrl'] == null
-                                        ? Text(data['username']?[0] ?? '?',
-                                        style: TextStyle(
-                                            color: Colors.grey.shade700, fontWeight: FontWeight.bold))
-                                        : null,
-                                  ),
+                              // 2. El Avatar con Borde de Color
+                              Container(
+                                padding: const EdgeInsets.all(
+                                  2,
+                                ), // Grosor del borde
+                                decoration: BoxDecoration(
+                                  shape: BoxShape.circle,
+                                  color: index < 3
+                                      ? getRankColor(index, userLogged)
+                                      : Colors.transparent, // Color del borde
                                 ),
-                              ],
-                            ),
-                          ),
-
-                          // SECCIÓN CENTRAL: NOMBRE
-                          title: Text(
-                            data['username'] ?? 'Anónimo',
-                            style: TextStyle(
-                              fontWeight: index<3 ? FontWeight.bold : FontWeight.w600,
-                              fontSize: index<3 ? 18 : 16, // Más grande para top 3
-                              color: const Color(0xFF333333),
-                            ),
-                          ),
-
-                          // SECCIÓN DERECHA: PUNTOS
-                          trailing: Container(
-                            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-                            decoration: BoxDecoration(
-                              // Si es Top 3, usa el color de su medalla, si no, el color secundario por defecto
-                              color: index<3 ? getRankColor(index, userLogged) : Color(0xFF8992D7),
-                              borderRadius: BorderRadius.circular(12),
-                            ),
-                            child: Text(
-                              "${data['score'] ?? 0}",
-                              style: TextStyle(
-                                fontWeight: FontWeight.bold,
-                                color: index<3 ? Colors.black87 : Colors.white,
+                                child: CircleAvatar(
+                                  radius: 20,
+                                  backgroundColor: Colors.grey.shade200,
+                                  backgroundImage:
+                                      data['profileImageUrl'] != null
+                                      ? NetworkImage(data['profileImageUrl'])
+                                      : null,
+                                  child: data['profileImageUrl'] == null
+                                      ? Text(
+                                          data['username']?[0] ?? '?',
+                                          style: TextStyle(
+                                            color: Colors.grey.shade700,
+                                            fontWeight: FontWeight.bold,
+                                          ),
+                                        )
+                                      : null,
+                                ),
                               ),
+                            ],
+                          ),
+                        ),
+
+                        // SECCIÓN CENTRAL: NOMBRE
+                        title: Text(
+                          data['username'] ?? 'Anónimo',
+                          style: TextStyle(
+                            fontWeight: index < 3
+                                ? FontWeight.bold
+                                : FontWeight.w600,
+                            fontSize: index < 3
+                                ? 18
+                                : 16, // Más grande para top 3
+                            color: const Color(0xFF333333),
+                          ),
+                        ),
+
+                        // SECCIÓN DERECHA: PUNTOS
+                        trailing: Container(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 12,
+                            vertical: 6,
+                          ),
+                          decoration: BoxDecoration(
+                            // Si es Top 3, usa el color de su medalla, si no, el color secundario por defecto
+                            color: index < 3
+                                ? getRankColor(index, userLogged)
+                                : Color(0xFF8992D7),
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                          child: Text(
+                            "${data['score'] ?? 0}",
+                            style: TextStyle(
+                              fontWeight: FontWeight.bold,
+                              color: index < 3 ? Colors.black87 : Colors.white,
                             ),
                           ),
                         ),
+                      ),
                     );
                   },
                 );
@@ -819,209 +1003,410 @@ class UserProfileView extends StatefulWidget {
   @override
   State<UserProfileView> createState() => _UserProfileViewState();
 }
+
 class _UserProfileViewState extends State<UserProfileView> {
+  bool _isEditing = false;
   late TextEditingController _usernameController;
   late TextEditingController _phoneController;
-  // bool _isLoading = false; // No se usa
   String? _currentImageUrl;
 
   @override
-  void initState() { super.initState(); _usernameController = TextEditingController(text: widget.user.username); _phoneController = TextEditingController(text: widget.user.phoneNumber ?? ''); _currentImageUrl = widget.user.profileImageUrl; }
+  void initState() {
+    super.initState();
+    _usernameController = TextEditingController(text: widget.user.username);
+    _phoneController = TextEditingController(
+      text: widget.user.phoneNumber ?? '',
+    );
+    _currentImageUrl = widget.user.profileImageUrl;
+  }
 
-  // OPTIMIZACIÓN DE IMAGEN DE PERFIL
+  void _ActiveEdit() {
+    setState(() {
+      _isEditing = true;
+    });
+  }
+
+  void _cancelEdit() {
+    setState(() {
+      _isEditing = false;
+      _usernameController.text = widget.user.username;
+      _phoneController.text = widget.user.phoneNumber ?? '';
+    });
+  }
+
   Future<void> _pickAndUploadImage(ImageSource source) async {
+    if (!_isEditing) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Activa el modo "Editar" para cambiar tu foto.'),
+        ),
+      );
+      return;
+    }
     final ImagePicker picker = ImagePicker();
-    final XFile? image = await picker.pickImage(source: source, imageQuality: 60, maxWidth: 512);
+    final XFile? image = await picker.pickImage(
+      source: source,
+      imageQuality: 60,
+      maxWidth: 512,
+    );
     if (image == null) return;
-    // ...eliminado _isLoading...
-    final ref = FirebaseStorage.instance.ref().child('profile_images').child('${widget.user.uid}.jpg');
-    await ref.putFile(File(image.path), SettableMetadata(contentType: 'image/jpeg'));
+    final ref = FirebaseStorage.instance
+        .ref()
+        .child('profile_images')
+        .child('${widget.user.uid}.jpg');
+    await ref.putFile(
+      File(image.path),
+      SettableMetadata(contentType: 'image/jpeg'),
+    );
     final url = await ref.getDownloadURL();
-    await FirebaseFirestore.instance.collection('users').doc(widget.user.uid).update({'profileImageUrl': url});
-    // ...eliminado _isLoading...
+
+    await FirebaseFirestore.instance
+        .collection('users')
+        .doc(widget.user.uid)
+        .update({'profileImageUrl': url});
+    setState(() {
+      _currentImageUrl = url;
+    });
   }
 
   Future<void> _updateProfile() async {
-    await FirebaseFirestore.instance.collection('users').doc(widget.user.uid).update({'username': _usernameController.text, 'phoneNumber': _phoneController.text});
-    if(mounted) ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Guardado')));
+    if (_usernameController.text.trim().isEmpty) return;
+
+    await FirebaseFirestore.instance
+        .collection('users')
+        .doc(widget.user.uid)
+        .update({
+          'username': _usernameController.text,
+          'phoneNumber': _phoneController.text,
+        });
+    if (mounted){
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Perfil actualizado correctamente')),);
+      setState(() {
+        _isEditing = false;
+      });
+      FocusScope.of(context).unfocus();
+    }
+
   }
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      decoration: BoxDecoration(
-        gradient: LinearGradient(
-          colors: [backgroundColor, accentColor],
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-        ),
-      ),
-      child: SingleChildScrollView(
-        padding: const EdgeInsets.all(24),
-        child: Column(
-          children: [
-            // Cabecera visual con avatar y nombre
-            Stack(
-              alignment: Alignment.center,
-              children: [
-                Container(
-                  margin: const EdgeInsets.only(bottom: 24),
-                  width: double.infinity,
-                  height: 120,
-                  decoration: BoxDecoration(
-                    borderRadius: BorderRadius.circular(24),
-                    gradient: LinearGradient(
-                      colors: [secondaryColor.withOpacity(0.18), accentColor.withOpacity(0.18)],
-                      begin: Alignment.topLeft,
-                      end: Alignment.bottomRight,
-                    ),
-                  ),
+    // Usamos un SingleChildScrollView con bouncing physics para sensación nativa
+    return SingleChildScrollView(
+      physics: const BouncingScrollPhysics(),
+      child: Column(
+        children: [
+          // ---------------------------------------------
+          // 1. CABECERA DE PERFIL (Tarjeta Superior)
+          // ---------------------------------------------
+          Container(
+            width: double.infinity,
+            padding: const EdgeInsets.fromLTRB(20, 40, 20, 30),
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: const BorderRadius.only(
+                bottomLeft: Radius.circular(30),
+                bottomRight: Radius.circular(30),
+              ),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withOpacity(0.05),
+                  blurRadius: 20,
+                  offset: const Offset(0, 10),
                 ),
-                Column(
+              ],
+            ),
+            child: Column(
+              children: [
+                // AVATAR CON BORDE Y BADGE DE CAMARA
+                Stack(
                   children: [
-                    GestureDetector(
-                      onTap: () => showModalBottomSheet(
-                        context: context,
-                        shape: const RoundedRectangleBorder(
-                          borderRadius: BorderRadius.vertical(top: Radius.circular(18)),
-                        ),
-                        builder: (ctx) => Wrap(
-                          children: [
-                            ListTile(
-                              leading: Icon(Icons.photo, color: secondaryColor),
-                              title: const Text('Galería'),
-                              onTap: () {
-                                Navigator.pop(ctx);
-                                _pickAndUploadImage(ImageSource.gallery);
-                              },
-                            ),
-                            ListTile(
-                              leading: Icon(Icons.camera, color: secondaryColor),
-                              title: const Text('Cámara'),
-                              onTap: () {
-                                Navigator.pop(ctx);
-                                _pickAndUploadImage(ImageSource.camera);
-                              },
-                            ),
-                          ],
+                    Container(
+                      decoration: BoxDecoration(
+                        shape: BoxShape.circle,
+                        border: Border.all(
+                          color: secondaryColor.withOpacity(0.2),
+                          width: 4,
                         ),
                       ),
                       child: CircleAvatar(
-                        radius: 54,
-                        backgroundColor: accentColor,
-                        backgroundImage: _currentImageUrl != null ? NetworkImage(_currentImageUrl!) : null,
-                        child: _currentImageUrl == null ? const Icon(Icons.camera_alt, color: Colors.white, size: 38) : null,
+                        radius: 60,
+                        backgroundColor: Colors.grey.shade200,
+                        backgroundImage: _currentImageUrl != null
+                            ? NetworkImage(_currentImageUrl!)
+                            : null,
+                        child: _currentImageUrl == null
+                            ? Icon(
+                                Icons.person,
+                                size: 60,
+                                color: Colors.grey.shade400,
+                              )
+                            : null,
                       ),
                     ),
-                    const SizedBox(height: 10),
-                    ShaderMask(
-                      shaderCallback: (Rect bounds) {
-                        return LinearGradient(
-                          colors: [secondaryColor, primaryColor],
-                          begin: Alignment.topLeft,
-                          end: Alignment.bottomRight,
-                        ).createShader(bounds);
-                      },
-                      child: Text(
-                        widget.user.username,
-                        style: const TextStyle(
-                          fontSize: 28,
-                          fontWeight: FontWeight.bold,
-                          color: Colors.white,
-                          letterSpacing: 1.2,
-                          shadows: [
-                            Shadow(blurRadius: 8, color: Colors.black26, offset: Offset(0, 2)),
-                          ],
+                    // Botón de cámara flotante
+                    if(_isEditing)
+                    Positioned(
+                      bottom: 0,
+                      right: 0,
+                      child: GestureDetector(
+                        onTap: () => showModalBottomSheet(
+                          context: context,
+                          backgroundColor: Colors.white,
+                          shape: const RoundedRectangleBorder(
+                            borderRadius: BorderRadius.vertical(
+                              top: Radius.circular(20),
+                            ),
+                          ),
+                          builder: (ctx) => Wrap(
+                            children: [
+                              ListTile(
+                                leading: const Icon(
+                                  Icons.photo,
+                                  color: secondaryColor,
+                                ),
+                                title: const Text('Galería'),
+                                onTap: () {
+                                  Navigator.pop(ctx);
+                                  _pickAndUploadImage(ImageSource.gallery);
+                                },
+                              ),
+                              ListTile(
+                                leading: const Icon(
+                                  Icons.camera_alt,
+                                  color: secondaryColor,
+                                ),
+                                title: const Text('Cámara'),
+                                onTap: () {
+                                  Navigator.pop(ctx);
+                                  _pickAndUploadImage(ImageSource.camera);
+                                },
+                              ),
+                            ],
+                          ),
+                        ),
+                        child: Container(
+                          padding: const EdgeInsets.all(8),
+                          decoration: const BoxDecoration(
+                            color: secondaryColor,
+                            shape: BoxShape.circle,
+                          ),
+                          child: const Icon(
+                            Icons.camera_alt,
+                            color: Colors.white,
+                            size: 20,
+                          ),
                         ),
                       ),
+                    ),
+                  ],
+                ),
+
+                const SizedBox(height: 15),
+
+                // NOMBRE
+                Text(
+                  widget.user.username,
+                  style: const TextStyle(
+                    fontSize: 26,
+                    fontWeight: FontWeight.bold,
+                    color: Color(0xFF2D3142),
+                  ),
+                ),
+                Text(
+                  "Explorador Nivel ${(_calculateLevel(widget.user.score))}",
+                  style: TextStyle(
+                    color: Colors.grey.shade500,
+                    fontWeight: FontWeight.w500,
+                  ),
+                ),
+
+                const SizedBox(height: 25),
+
+                // ESTADÍSTICAS
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                  children: [
+                    _buildStatItem(
+                      "Puntaje",
+                      "${widget.user.score}",
+                      Icons.star_rounded,
+                      Colors.orangeAccent,
+                    ),
+                    Container(
+                      height: 40,
+                      width: 1,
+                      color: Colors.grey.shade200,
+                    ), // Divisor
+                    _buildStatItem(
+                      "Tesoros",
+                      "${widget.user.foundTreasures?.length ?? 0}",
+                      Icons.diamond_rounded,
+                      Colors.blueAccent,
                     ),
                   ],
                 ),
               ],
             ),
-            // Card de estadísticas con iconos
-            Card(
-              color: cardColor,
-              elevation: 5,
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(18)),
-              margin: const EdgeInsets.only(bottom: 18),
-              child: Padding(
-                padding: const EdgeInsets.symmetric(vertical: 18, horizontal: 12),
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+          ),
+
+          const SizedBox(height: 30),
+
+          // ---------------------------------------------
+          // 2. FORMULARIO DE EDICIÓN
+          // ---------------------------------------------
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 20),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Text("Información Personal", style: TextStyle(fontWeight: FontWeight.bold, color: Colors.black54)),
+                      if (_isEditing)
+                        Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                          decoration: BoxDecoration(color: Colors.orange.shade50, borderRadius: BorderRadius.circular(8)),
+                          child: const Text("Editando...", style: TextStyle(color: Colors.orange, fontSize: 12, fontWeight: FontWeight.bold)),
+                        )
+                    ],
+                  ),
+                const SizedBox(height: 20),
+                // CAMPO NOMBRE
+                _InputsBuilder(_usernameController, "Nombre de Usuario", Icons.person_outline, enabled: _isEditing),
+                const SizedBox(height: 15),
+                _InputsBuilder(_phoneController, "Teléfono", Icons.phone_outlined, isPhone: true, enabled: _isEditing),
+                const SizedBox(height: 30),
+
+                // BOTÓN EDITAR
+                Row(
                   children: [
-                    Column(
-                      children: [
-                        Icon(Icons.star, color: secondaryColor, size: 28),
-                        const SizedBox(height: 4),
-                        const Text('Puntaje', style: TextStyle(color: Colors.grey)),
-                        Text('${widget.user.score}', style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold, color: secondaryColor)),
-                      ],
+                    // Botón Principal (Editar o Guardar)
+                    Expanded(
+                      child: SizedBox(
+                        height: 55,
+                        child: ElevatedButton.icon(
+                          onPressed: _isEditing ? _updateProfile : _ActiveEdit,
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: _isEditing ? accentColor : secondaryColor, // Verde si guarda, Morado si edita
+                            foregroundColor: Colors.white,
+                            elevation: 5,
+                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(15)),
+                          ),
+                          icon: Icon(_isEditing ? Icons.check_circle : Icons.edit),
+                          label: Text(
+                              _isEditing ? 'Guardar Cambios' : 'Editar Perfil',
+                              style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold)
+                          ),
+                        ),
+                      ),
                     ),
-                    Container(height: 40, width: 1, color: Colors.grey[300]),
-                    Column(
-                      children: [
-                        Icon(Icons.emoji_events, color: secondaryColor, size: 28),
-                        const SizedBox(height: 4),
-                        const Text('Tesoros', style: TextStyle(color: Colors.grey)),
-                        Text('${widget.user.foundTreasures?.length ?? 0}', style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold, color: secondaryColor)),
-                      ],
-                    ),
+
+                    // Botón Cancelar (Solo visible si editamos)
+                    if (_isEditing) ...[
+                      const SizedBox(width: 15),
+                      InkWell(
+                        onTap: _cancelEdit,
+                        borderRadius: BorderRadius.circular(15),
+                        child: Container(
+                          height: 55,
+                          width: 55,
+                          decoration: BoxDecoration(
+                            color: Colors.red.shade100,
+                            borderRadius: BorderRadius.circular(15),
+                          ),
+                          child: Icon(Icons.close, color: Colors.red.shade700),
+                        ),
+                      )
+                    ]
                   ],
                 ),
-              ),
+                const SizedBox(height: 40),
+              ],
             ),
-            // Inputs modernos
-            const SizedBox(height: 10),
-            TextField(
-              controller: _usernameController,
-              decoration: InputDecoration(
-                labelText: 'Nombre',
-                labelStyle: TextStyle(fontWeight: FontWeight.bold, color: secondaryColor),
-                filled: true,
-                fillColor: cardColor,
-                border: OutlineInputBorder(borderRadius: BorderRadius.circular(14)),
-                focusedBorder: OutlineInputBorder(borderSide: BorderSide(color: secondaryColor), borderRadius: BorderRadius.circular(14)),
-                prefixIcon: Icon(Icons.person, color: accentColor),
-              ),
-            ),
-            const SizedBox(height: 14),
-            TextField(
-              controller: _phoneController,
-              decoration: InputDecoration(
-                labelText: 'Teléfono',
-                labelStyle: TextStyle(fontWeight: FontWeight.bold, color: secondaryColor),
-                filled: true,
-                fillColor: cardColor,
-                border: OutlineInputBorder(borderRadius: BorderRadius.circular(14)),
-                focusedBorder: OutlineInputBorder(borderSide: BorderSide(color: secondaryColor), borderRadius: BorderRadius.circular(14)),
-                prefixIcon: Icon(Icons.phone, color: accentColor),
-              ),
-              keyboardType: TextInputType.phone,
-            ),
-            const SizedBox(height: 22),
-            SizedBox(
-              width: double.infinity,
-              child: AnimatedContainer(
-                duration: const Duration(milliseconds: 300),
-                curve: Curves.easeInOut,
-                child: ElevatedButton(
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: secondaryColor,
-                    foregroundColor: Colors.white,
-                    padding: const EdgeInsets.symmetric(vertical: 16),
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
-                    textStyle: const TextStyle(fontWeight: FontWeight.bold, fontSize: 17),
-                    elevation: 3,
-                  ),
-                  onPressed: _updateProfile,
-                  child: const Text('Guardar'),
-                ),
-              ),
-            ),
-          ],
+          ),
+        ],
+      ),
+    );
+  }
+
+  // Helper para items de estadística
+  Widget _buildStatItem(
+    String label,
+    String value,
+    IconData icon,
+    Color color,
+  ) {
+    return Column(
+      children: [
+        Container(
+          padding: const EdgeInsets.all(8),
+          decoration: BoxDecoration(
+            color: color.withOpacity(0.1),
+            shape: BoxShape.circle,
+          ),
+          child: Icon(icon, color: color, size: 24),
+        ),
+        const SizedBox(height: 8),
+        Text(
+          value,
+          style: const TextStyle(
+            fontSize: 20,
+            fontWeight: FontWeight.bold,
+            color: Color(0xFF2D3142),
+          ),
+        ),
+        Text(
+          label,
+          style: TextStyle(fontSize: 12, color: Colors.grey.shade500),
+        ),
+      ],
+    );
+  }
+
+  Widget _InputsBuilder(
+    TextEditingController controller,
+    String label,
+    IconData icon, {
+      bool isPhone = false,
+      bool enabled = true
+  }) {
+    return AnimatedContainer(
+      duration: const Duration(milliseconds: 200),
+      decoration: BoxDecoration(
+        color: enabled ? Colors.white : Colors.grey.shade100, // Cambio de color sutil
+        borderRadius: BorderRadius.circular(15),
+        boxShadow: enabled
+            ? [BoxShadow(color: Colors.black.withOpacity(0.03), blurRadius: 10, offset: const Offset(0, 4))]
+            : [], // Sin sombra si está deshabilitado
+        border: enabled ? null : Border.all(color: Colors.grey.shade300), // Borde si está deshabilitado
+      ),
+      child: TextField(
+        controller: controller,
+        enabled: enabled, // <--- Aquí ocurre la magia
+        keyboardType: isPhone ? TextInputType.phone : TextInputType.text,
+        style: TextStyle(
+            fontWeight: FontWeight.w600,
+            color: enabled ? const Color(0xFF2D3142) : Colors.grey.shade600 // Texto más claro si no se edita
+        ),
+        decoration: InputDecoration(
+          labelText: label,
+          labelStyle: TextStyle(color: Colors.grey.shade400),
+          prefixIcon: Icon(icon, color: enabled ? secondaryColor : Colors.grey),
+          border: InputBorder.none,
+          contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+          enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(15), borderSide: BorderSide.none),
+          disabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(15), borderSide: BorderSide.none),
+          focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(15), borderSide: const BorderSide(color: secondaryColor, width: 1.5)),
         ),
       ),
     );
+  }
+
+  // Helper simple para calcular nivel
+  int _calculateLevel(int? score) {
+    if (score == null) return 1;
+    return (score / 500).floor() + 1;
   }
 }
