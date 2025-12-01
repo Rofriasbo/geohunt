@@ -10,7 +10,7 @@ import 'package:permission_handler/permission_handler.dart';
 import 'package:flutter_map/flutter_map.dart';
 import 'package:latlong2/latlong.dart';
 import 'package:geolocator/geolocator.dart';
-import 'package:sensors_plus/sensors_plus.dart'; // IMPORTANTE: Sensores
+import 'package:sensors_plus/sensors_plus.dart'; // Sensores
 import 'package:vibration/vibration.dart';
 import 'database_service.dart';
 import 'fcm_service.dart';
@@ -42,8 +42,6 @@ class _WelcomeScreenState extends State<WelcomeScreen> {
 
   int _selectedIndex = 0;
   final String _currentUid = FirebaseAuth.instance.currentUser!.uid;
-
-  // ...colores globales...
 
   Future<void> saveFCMTokenAndLocation(String uid) async {
     final DatabaseService dbService = DatabaseService();
@@ -81,8 +79,8 @@ class _WelcomeScreenState extends State<WelcomeScreen> {
     });
 
     FirebaseMessaging.onMessageOpenedApp.listen((RemoteMessage message) {
-      print('👆 Usuario tocó la notificación (Background)');
-      // Aquí puedes agregar lógica para navegar al mapa y centrar el tesoro
+      print('Usuario tocó la notificación');
+      // lógica para navegar al mapa y centrar el tesoro
     });
 
     FirebaseMessaging.instance.getInitialMessage().then((
@@ -118,10 +116,11 @@ class _WelcomeScreenState extends State<WelcomeScreen> {
           .doc(_currentUid)
           .snapshots(),
       builder: (context, snapshot) {
-        if (!snapshot.hasData)
+        if (!snapshot.hasData) {
           return const Scaffold(
             body: Center(child: CircularProgressIndicator()),
           );
+        }
 
         final data = snapshot.data!.data() as Map<String, dynamic>;
         UserModel currentUser = UserModel.fromMap(data, _currentUid);
@@ -132,34 +131,9 @@ class _WelcomeScreenState extends State<WelcomeScreen> {
           UserProfileView(user: currentUser),
         ];
 
-        return Scaffold(
-          backgroundColor: backgroundColor,
-          appBar: AppBar(
-            title: const Text(
-              'GeoHunt Explorador',
-              style: TextStyle(
-                fontWeight: FontWeight.bold,
-                color: Colors.white,
-                fontSize: 22,
-              ),
-            ),
-            backgroundColor: primaryColor,
-            elevation: 4,
-            actions: [
-              IconButton(
-                icon: const Icon(Icons.exit_to_app, color: Colors.white),
-                onPressed: () async {
-                  await FirebaseAuth.instance.signOut();
-                  if (mounted)
-                    Navigator.of(context).pushAndRemoveUntil(
-                      MaterialPageRoute(builder: (context) => const Login()),
-                      (route) => false,
-                    );
-                },
-              ),
-            ],
-          ),
-          body: Container(
+        return SafeArea(
+          top: false,
+          child: Container(
             decoration: BoxDecoration(
               gradient: LinearGradient(
                 colors: [backgroundColor, accentColor],
@@ -167,25 +141,67 @@ class _WelcomeScreenState extends State<WelcomeScreen> {
                 end: Alignment.bottomRight,
               ),
             ),
-            child: _widgetOptions.elementAt(_selectedIndex),
-          ),
-          bottomNavigationBar: Padding(
-            padding: EdgeInsets.only(top: 20),
-            child: CurvedNavigationBar(
-              key: _bottomNavigationKey,
-              index: _selectedIndex,
-              backgroundColor: Colors.transparent, //COLOR DE FONDO
-              buttonBackgroundColor: secondaryColor, //COLOR CIRCULAR DEL ICONO
-              color: secondaryColor, //COLOR DE LA BARRA
-              animationCurve: Curves.easeInOut,
-              animationDuration: Duration(milliseconds: 400),
-              height: 65,
-              items: [
-                _buildNavItem(Icons.map, 'Cazar', 0),
-                _buildNavItem(Icons.emoji_events, 'Top 10', 1),
-                _buildNavItem(Icons.person, 'Perfil', 2),
-              ],
-              onTap: _onItemTapped,
+            child: Scaffold(
+              backgroundColor: Colors.transparent,
+              resizeToAvoidBottomInset: false,
+              appBar: AppBar(
+                title: Text(
+                  'GeoHunt Explorador',
+                  style: TextStyle(
+                    fontWeight: FontWeight.bold,
+                    color: Colors.white,
+                    fontSize: 22,
+                  ),
+                ),
+                backgroundColor: Colors.transparent,
+                elevation: 4,
+                actions: [
+                  IconButton(
+                    icon: const Icon(Icons.exit_to_app, color: Colors.white),
+                    onPressed: () async {
+                      await FirebaseAuth.instance.signOut();
+                      if (mounted) {
+                        Navigator.of(context).pushAndRemoveUntil(
+                          MaterialPageRoute(
+                            builder: (context) => const Login(),
+                          ),
+                          (route) => false,
+                        );
+                      }
+                    },
+                  ),
+                ],
+              ),
+              body: Container(
+                decoration: BoxDecoration(
+                  gradient: LinearGradient(
+                    colors: [backgroundColor, accentColor],
+                    begin: Alignment.topLeft,
+                    end: Alignment.bottomRight,
+                  ),
+                ),
+                child: _widgetOptions.elementAt(_selectedIndex),
+              ),
+              bottomNavigationBar: Padding(
+                padding: EdgeInsets.only(top: 20),
+                child: CurvedNavigationBar(
+                  key: _bottomNavigationKey,
+                  index: _selectedIndex,
+                  backgroundColor: Colors.transparent, //COLOR DE FONDO
+                  buttonBackgroundColor:
+                      secondaryColor, //COLOR CIRCULAR DEL ICONO
+                  color: secondaryColor, //COLOR DE LA BARRA
+                  animationCurve: Curves.easeInOut,
+                  animationDuration: Duration(milliseconds: 400),
+                  height: 65,
+                  items: [
+                    _buildNavItem(Icons.map, 'Cazar', 0),
+                    _buildNavItem(Icons.emoji_events, 'Top 10', 1),
+                    _buildNavItem(Icons.person, 'Perfil', 2),
+                  ],
+                  onTap: _onItemTapped,
+                ),
+              ),
             ),
           ),
         );
@@ -322,7 +338,7 @@ class _UserMapViewState extends State<UserMapView> {
           throw Exception("Este tesoro ya no existe (fue eliminado o expiró).");
         }
 
-        // En lugar de leer campo por campo manualmente, usamos tu factory 'fromMap'.
+        // En lugar de leer campo por campo manualmente, usamo factory 'fromMap'.
         // Convirtiendo automáticamente los Timestamps a DateTime.
         final freshTreasure = TreasureModel.fromMap(
           snapshot.data() as Map<String, dynamic>,
@@ -344,9 +360,9 @@ class _UserMapViewState extends State<UserMapView> {
             pointsToAdd = 100;
         }
 
-        // Lógica de Tiempo Límite (Usando el DateTime ya convertido del modelo)
+        // Lógica de Tiempo Límite Usando el DateTime ya convertido del modelo
         if (freshTreasure.isLimitedTime && freshTreasure.limitedUntil != null) {
-          // Comparamos DateTime con DateTime (fácil y limpio)
+          // Comparamos DateTime con DateTime
           if (DateTime.now().isBefore(freshTreasure.limitedUntil!)) {
             pointsToAdd += 200;
           }
@@ -395,9 +411,7 @@ class _UserMapViewState extends State<UserMapView> {
           context: context,
           builder: (ctx) => AlertDialog(
             title: const Text('Se te acabó el tiempo. Suerte para la próxima'),
-            content: Text(
-              e.toString().replaceAll("Exception: ", ""),
-            ),
+            content: Text(e.toString().replaceAll("Exception: ", "")),
             actions: [
               TextButton(
                 onPressed: () => Navigator.pop(ctx),
@@ -440,7 +454,7 @@ class _UserMapViewState extends State<UserMapView> {
         Geolocator.getPositionStream(
           locationSettings: locationSettings,
         ).listen((pos) {
-          // Se ejecuta CADA VEZ que el GPS reporta una nueva posición
+          // Se ejecuta cuando el GPS reporta una nueva posición
           if (mounted) {
             final newPosition = LatLng(pos.latitude, pos.longitude);
 
@@ -478,11 +492,10 @@ class _UserMapViewState extends State<UserMapView> {
                     '¡CORRE! Tesoro Temporal ⏳',
                     'Se acaba el tiempo. ¡Agita rápido para reclamar!',
                     'tesoro',
-                    fechaLimite: foundInRange!
-                        .limitedUntil, // <--- Pasamos la fecha aquí
+                    fechaLimite: foundInRange!.limitedUntil,
                   );
                 } else {
-                  // CASO B: Tesoro Normal 🟢
+                  // CASO B: Tesoro Normal
                   // No pasamos fecha, así que no mostrará cronómetro
                   mostrarNotificacion(
                     '¡Tesoro cerca! 🟢',
@@ -520,7 +533,7 @@ class _UserMapViewState extends State<UserMapView> {
     if (_currentPosition != null) _mapController.move(_currentPosition!, 18);
   }
 
-  // Solo considera los NO encontrados para guiarte
+  // Solo considera los NO encontrados para guiar al usuario
   List<LatLng> _calculateOptimizedRoute(
     List<TreasureModel> uncollectedTreasures,
   ) {
@@ -1079,14 +1092,15 @@ class _UserProfileViewState extends State<UserProfileView> {
           'username': _usernameController.text,
           'phoneNumber': _phoneController.text,
         });
-    if (mounted){
-      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Perfil actualizado correctamente')),);
+    if (mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Perfil actualizado correctamente')),
+      );
       setState(() {
         _isEditing = false;
       });
       FocusScope.of(context).unfocus();
     }
-
   }
 
   @override
@@ -1145,60 +1159,60 @@ class _UserProfileViewState extends State<UserProfileView> {
                       ),
                     ),
                     // Botón de cámara flotante
-                    if(_isEditing)
-                    Positioned(
-                      bottom: 0,
-                      right: 0,
-                      child: GestureDetector(
-                        onTap: () => showModalBottomSheet(
-                          context: context,
-                          backgroundColor: Colors.white,
-                          shape: const RoundedRectangleBorder(
-                            borderRadius: BorderRadius.vertical(
-                              top: Radius.circular(20),
+                    if (_isEditing)
+                      Positioned(
+                        bottom: 0,
+                        right: 0,
+                        child: GestureDetector(
+                          onTap: () => showModalBottomSheet(
+                            context: context,
+                            backgroundColor: Colors.white,
+                            shape: const RoundedRectangleBorder(
+                              borderRadius: BorderRadius.vertical(
+                                top: Radius.circular(20),
+                              ),
+                            ),
+                            builder: (ctx) => Wrap(
+                              children: [
+                                ListTile(
+                                  leading: const Icon(
+                                    Icons.photo,
+                                    color: secondaryColor,
+                                  ),
+                                  title: const Text('Galería'),
+                                  onTap: () {
+                                    Navigator.pop(ctx);
+                                    _pickAndUploadImage(ImageSource.gallery);
+                                  },
+                                ),
+                                ListTile(
+                                  leading: const Icon(
+                                    Icons.camera_alt,
+                                    color: secondaryColor,
+                                  ),
+                                  title: const Text('Cámara'),
+                                  onTap: () {
+                                    Navigator.pop(ctx);
+                                    _pickAndUploadImage(ImageSource.camera);
+                                  },
+                                ),
+                              ],
                             ),
                           ),
-                          builder: (ctx) => Wrap(
-                            children: [
-                              ListTile(
-                                leading: const Icon(
-                                  Icons.photo,
-                                  color: secondaryColor,
-                                ),
-                                title: const Text('Galería'),
-                                onTap: () {
-                                  Navigator.pop(ctx);
-                                  _pickAndUploadImage(ImageSource.gallery);
-                                },
-                              ),
-                              ListTile(
-                                leading: const Icon(
-                                  Icons.camera_alt,
-                                  color: secondaryColor,
-                                ),
-                                title: const Text('Cámara'),
-                                onTap: () {
-                                  Navigator.pop(ctx);
-                                  _pickAndUploadImage(ImageSource.camera);
-                                },
-                              ),
-                            ],
-                          ),
-                        ),
-                        child: Container(
-                          padding: const EdgeInsets.all(8),
-                          decoration: const BoxDecoration(
-                            color: secondaryColor,
-                            shape: BoxShape.circle,
-                          ),
-                          child: const Icon(
-                            Icons.camera_alt,
-                            color: Colors.white,
-                            size: 20,
+                          child: Container(
+                            padding: const EdgeInsets.all(8),
+                            decoration: const BoxDecoration(
+                              color: secondaryColor,
+                              shape: BoxShape.circle,
+                            ),
+                            child: const Icon(
+                              Icons.camera_alt,
+                              color: Colors.white,
+                              size: 20,
+                            ),
                           ),
                         ),
                       ),
-                    ),
                   ],
                 ),
 
@@ -1261,22 +1275,52 @@ class _UserProfileViewState extends State<UserProfileView> {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      Text("Información Personal", style: TextStyle(fontWeight: FontWeight.bold, color: Colors.black54)),
-                      if (_isEditing)
-                        Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                          decoration: BoxDecoration(color: Colors.orange.shade50, borderRadius: BorderRadius.circular(8)),
-                          child: const Text("Editando...", style: TextStyle(color: Colors.orange, fontSize: 12, fontWeight: FontWeight.bold)),
-                        )
-                    ],
-                  ),
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Text(
+                      "Información Personal",
+                      style: TextStyle(
+                        fontWeight: FontWeight.bold,
+                        color: Colors.black54,
+                      ),
+                    ),
+                    if (_isEditing)
+                      Container(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 8,
+                          vertical: 4,
+                        ),
+                        decoration: BoxDecoration(
+                          color: Colors.orange.shade50,
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                        child: const Text(
+                          "Editando...",
+                          style: TextStyle(
+                            color: Colors.orange,
+                            fontSize: 12,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                      ),
+                  ],
+                ),
                 const SizedBox(height: 20),
                 // CAMPO NOMBRE
-                _InputsBuilder(_usernameController, "Nombre de Usuario", Icons.person_outline, enabled: _isEditing),
+                _InputsBuilder(
+                  _usernameController,
+                  "Nombre de Usuario",
+                  Icons.person_outline,
+                  enabled: _isEditing,
+                ),
                 const SizedBox(height: 15),
-                _InputsBuilder(_phoneController, "Teléfono", Icons.phone_outlined, isPhone: true, enabled: _isEditing),
+                _InputsBuilder(
+                  _phoneController,
+                  "Teléfono",
+                  Icons.phone_outlined,
+                  isPhone: true,
+                  enabled: _isEditing,
+                ),
                 const SizedBox(height: 30),
 
                 // BOTÓN EDITAR
@@ -1289,15 +1333,24 @@ class _UserProfileViewState extends State<UserProfileView> {
                         child: ElevatedButton.icon(
                           onPressed: _isEditing ? _updateProfile : _ActiveEdit,
                           style: ElevatedButton.styleFrom(
-                            backgroundColor: _isEditing ? accentColor : secondaryColor, // Verde si guarda, Morado si edita
+                            backgroundColor: _isEditing
+                                ? accentColor
+                                : secondaryColor, // Verde si guarda, Morado si edita
                             foregroundColor: Colors.white,
                             elevation: 5,
-                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(15)),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(15),
+                            ),
                           ),
-                          icon: Icon(_isEditing ? Icons.check_circle : Icons.edit),
+                          icon: Icon(
+                            _isEditing ? Icons.check_circle : Icons.edit,
+                          ),
                           label: Text(
-                              _isEditing ? 'Guardar Cambios' : 'Editar Perfil',
-                              style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold)
+                            _isEditing ? 'Guardar Cambios' : 'Editar Perfil',
+                            style: const TextStyle(
+                              fontSize: 18,
+                              fontWeight: FontWeight.bold,
+                            ),
                           ),
                         ),
                       ),
@@ -1318,8 +1371,8 @@ class _UserProfileViewState extends State<UserProfileView> {
                           ),
                           child: Icon(Icons.close, color: Colors.red.shade700),
                         ),
-                      )
-                    ]
+                      ),
+                    ],
                   ],
                 ),
                 const SizedBox(height: 40),
@@ -1369,44 +1422,71 @@ class _UserProfileViewState extends State<UserProfileView> {
     TextEditingController controller,
     String label,
     IconData icon, {
-      bool isPhone = false,
-      bool enabled = true
+    bool isPhone = false,
+    bool enabled = true,
   }) {
     return AnimatedContainer(
       duration: const Duration(milliseconds: 200),
       decoration: BoxDecoration(
-        color: enabled ? Colors.white : Colors.grey.shade100, // Cambio de color sutil
+        color: enabled ? Colors.white : Colors.grey.shade100,
         borderRadius: BorderRadius.circular(15),
         boxShadow: enabled
-            ? [BoxShadow(color: Colors.black.withOpacity(0.03), blurRadius: 10, offset: const Offset(0, 4))]
-            : [], // Sin sombra si está deshabilitado
-        border: enabled ? null : Border.all(color: Colors.grey.shade300), // Borde si está deshabilitado
+            ? [
+                BoxShadow(
+                  color: Colors.black12,
+                  blurRadius: 10,
+                  offset: const Offset(0, 4),
+                ),
+              ]
+            : [],
+        border: enabled ? null : Border.all(color: Colors.grey.shade300),
       ),
       child: TextField(
         controller: controller,
-        enabled: enabled, // <--- Aquí ocurre la magia
+        enabled: enabled,
         keyboardType: isPhone ? TextInputType.phone : TextInputType.text,
         style: TextStyle(
-            fontWeight: FontWeight.w600,
-            color: enabled ? const Color(0xFF2D3142) : Colors.grey.shade600 // Texto más claro si no se edita
+          fontWeight: FontWeight.w600,
+          color: enabled ? const Color(0xFF2D3142) : Colors.grey.shade600,
         ),
         decoration: InputDecoration(
           labelText: label,
           labelStyle: TextStyle(color: Colors.grey.shade400),
           prefixIcon: Icon(icon, color: enabled ? secondaryColor : Colors.grey),
           border: InputBorder.none,
-          contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
-          enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(15), borderSide: BorderSide.none),
-          disabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(15), borderSide: BorderSide.none),
-          focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(15), borderSide: const BorderSide(color: secondaryColor, width: 1.5)),
+          contentPadding: const EdgeInsets.symmetric(
+            horizontal: 20,
+            vertical: 16,
+          ),
+          enabledBorder: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(15),
+            borderSide: BorderSide.none,
+          ),
+          disabledBorder: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(15),
+            borderSide: BorderSide.none,
+          ),
+          focusedBorder: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(15),
+            borderSide: const BorderSide(color: secondaryColor, width: 1.5),
+          ),
         ),
       ),
     );
   }
 
-  // Helper simple para calcular nivel
+  // Fórmula: PuntosParaNivel(N) = Base * Multiplicador^(N-1)
+  // N = 1 + log(score / Base) / log(Multiplicador)
   int _calculateLevel(int? score) {
-    if (score == null) return 1;
-    return (score / 500).floor() + 1;
+    if (score == null || score <= 0) return 0;
+
+    const double base = 1000.0; // Puntos para el nivel 1
+    const double multiplicador =
+        1.5; // Incremento de puntos rqueridos por nivel
+
+    if (score < base) return 0;
+
+    double nivel = 1 + (log(score / base) / log(multiplicador));
+    return nivel.floor();
   }
 }

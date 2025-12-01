@@ -1,8 +1,8 @@
 import 'dart:async';
 import 'dart:io';
-import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:curved_navigation_bar/curved_navigation_bar.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_storage/firebase_storage.dart';
 import 'package:image_picker/image_picker.dart';
@@ -512,18 +512,26 @@ class _TreasuresMapViewState extends State<TreasuresMapView> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      bottomNavigationBar: BottomNavigationBar(
-        currentIndex: _showRoutes ? 1 : 0,
+      bottomNavigationBar: CurvedNavigationBar(
+        index: _showRoutes ? 1 : 0,
+        height: 60.0,
+        items: const <Widget>[
+          Icon(Icons.map, size: 30, color: Colors.white),
+          Icon(Icons.alt_route, size: 30, color: Colors.white),
+        ],
+        color: const Color(0xFF91B1A8), // Color de fondo de la barra
+        buttonBackgroundColor: const Color(0xFF8992D7), // Color del botón seleccionado
+        backgroundColor: const Color(0xFFE6F2EF), // Color de fondo del Scaffold
+        animationCurve: Curves.easeInOut,
+        animationDuration: const Duration(milliseconds: 400),
         onTap: (index) {
           if (index == 1 && _currentPosition == null) {
-            ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Activa el GPS')));
+            ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+                content: Text('Activa el GPS para calcular la ruta'),
+                backgroundColor: Colors.orangeAccent));
           }
           setState(() => _showRoutes = (index == 1));
         },
-        items: const [
-          BottomNavigationBarItem(icon: Icon(Icons.map), label: 'Explorar'),
-          BottomNavigationBarItem(icon: Icon(Icons.alt_route), label: 'Ruta (200m)'),
-        ],
       ),
       floatingActionButton: FloatingActionButton(
         onPressed: _centerOnUser,
