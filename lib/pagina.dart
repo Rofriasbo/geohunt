@@ -663,12 +663,11 @@ class _UserMapViewState extends State<UserMapView> {
     markers = _allTreasures.map((t) {
       bool isFound = widget.user.foundTreasures?.contains(t.id) ?? false;
       Color markerColor;
-      if (isFound)
-        markerColor = Colors.grey;
-      else if (t.id == _treasureInRange?.id)
-        markerColor = Colors.green;
-      else
-        markerColor = Colors.red;
+      if (isFound) markerColor = Colors.grey;
+      else if (t.id == _treasureInRange?.id) markerColor = Colors.green;
+      else if (t.isLimitedTime) markerColor = Colors.amber;
+
+      else markerColor = Colors.red;
 
       return Marker(
         point: LatLng(t.location.latitude, t.location.longitude),
