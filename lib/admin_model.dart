@@ -5,7 +5,7 @@ class AdminModel {
   final String email;
   final String username;
   final String? phoneNumber;
-  final String? profileImageUrl; // NUEVO CAMPO
+  final String? profileImageUrl;
   final String role;
   final List<String> permissions;
   final Timestamp? lastLogin;
@@ -15,7 +15,7 @@ class AdminModel {
     required this.email,
     required this.username,
     this.phoneNumber,
-    this.profileImageUrl, // NUEVO
+    this.profileImageUrl,
     this.role = 'admin',
     this.permissions = const ['manage_treasures', 'manage_users'],
     this.lastLogin,
@@ -27,7 +27,7 @@ class AdminModel {
       email: data['email'] ?? '',
       username: data['username'] ?? 'Administrador',
       phoneNumber: data['phoneNumber'],
-      profileImageUrl: data['profileImageUrl'], // Leemos la imagen
+      profileImageUrl: data['profileImageUrl'],
       role: data['role'] ?? 'admin',
       permissions: data['permissions'] != null
           ? List<String>.from(data['permissions'])
@@ -41,7 +41,7 @@ class AdminModel {
       'email': email,
       'username': username,
       'phoneNumber': phoneNumber,
-      'profileImageUrl': profileImageUrl, // Guardamos la imagen
+      'profileImageUrl': profileImageUrl,
       'role': role,
       'permissions': permissions,
       'lastLogin': lastLogin ?? Timestamp.now(),

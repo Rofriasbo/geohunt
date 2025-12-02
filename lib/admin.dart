@@ -1,8 +1,8 @@
 import 'dart:async';
 import 'dart:io';
-import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:curved_navigation_bar/curved_navigation_bar.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_storage/firebase_storage.dart';
 import 'package:image_picker/image_picker.dart';
@@ -62,7 +62,7 @@ class _AdminScreenState extends State<AdminScreen> {
           // Índice 1: Lista de Tesoros
           const TreasuresListView(),
           // Índice 2: Exploradores
-          const UsersListView(), // <-- AÑADIDO
+          const UsersListView(),
           // Índice 3: Modificar Perfil
           ProfileEditView(adminUser: currentAdmin),
           // Índice 4: Manual de Usuario
@@ -172,7 +172,7 @@ class _AdminScreenState extends State<AdminScreen> {
 }
 
 // ---------------------------------------------------------------------------
-// VISTA 1: MAPA DE TESOROS (CRUD + FOTO OPTIMIZADA)
+// VISTA 1: MAPA DE TESOROS
 // ---------------------------------------------------------------------------
 class TreasuresMapView extends StatefulWidget {
   final String adminUid;
@@ -257,10 +257,9 @@ class _TreasuresMapViewState extends State<TreasuresMapView> {
     return path;
   }
 
-  // --- LÓGICA DE IMAGEN DEL TESORO (OPTIMIZADA) ---
+  // --- LÓGICA DE IMAGEN DEL TESORO ---
   Future<void> _pickTreasureImage(StateSetter setDialogState) async {
     final ImagePicker picker = ImagePicker();
-    // OPTIMIZACIÓN: Max 1024px y Calidad 70% (Balance detalle/peso)
     final XFile? image = await picker.pickImage(
         source: ImageSource.gallery,
         imageQuality: 70,
@@ -310,16 +309,28 @@ class _TreasuresMapViewState extends State<TreasuresMapView> {
         builder: (context, setDialogState) {
           bool canAddPhoto = (difficulty == 'Fácil' || difficulty == 'Medio');
 
-          return AlertDialog(
-            title: Text(isEditing ? 'Editar Tesoro' : 'Nuevo Tesoro'),
+          return AlertDialog.adaptive(
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+            backgroundColor: const Color(0xFFF2F5F4),
+            elevation: 10,
+            titlePadding: EdgeInsets.zero,
+            contentPadding: const EdgeInsets.fromLTRB(24, 20, 24, 0),
+            actionsPadding: const EdgeInsets.all(16.0),
+            title: Container(
+              padding: const EdgeInsets.all(20),
+              decoration: const BoxDecoration(
+                borderRadius: BorderRadius.only(topLeft: Radius.circular(16), topRight: Radius.circular(16)),
+                gradient: LinearGradient(colors: [Color(0xFF91B1A8), Color(0xFF8992D7)], begin: Alignment.topLeft, end: Alignment.bottomRight),
+              ),
+              child: Text(isEditing ? 'Editar Tesoro' : 'Nuevo Tesoro', style: const TextStyle(fontWeight: FontWeight.bold, color: Colors.white)),
+            ),
             content: SingleChildScrollView(
               child: Form(
                 key: formKey,
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
+                child: Wrap(
+                  runSpacing: 16,
                   children: [
                     Text('Ubicación: ${finalLocation.latitude.toStringAsFixed(5)}, ${finalLocation.longitude.toStringAsFixed(5)}', style: const TextStyle(fontSize: 12, color: Colors.grey)),
-                    const SizedBox(height: 10),
                     TextFormField(
                       controller: titleController,
                       decoration: const InputDecoration(labelText: 'Título'),
@@ -330,9 +341,8 @@ class _TreasuresMapViewState extends State<TreasuresMapView> {
                       decoration: const InputDecoration(labelText: 'Descripción'),
                       maxLines: 2,
                     ),
-                    const SizedBox(height: 10),
                     DropdownButtonFormField<String>(
-                      value: difficulty,
+                      initialValue: difficulty,
                       decoration: const InputDecoration(labelText: 'Dificultad'),
                       items: ['Fácil', 'Medio', 'Difícil'].map((e) => DropdownMenuItem(value: e, child: Text(e))).toList(),
                       onChanged: (v) => setDialogState(() {
@@ -345,7 +355,6 @@ class _TreasuresMapViewState extends State<TreasuresMapView> {
                       value: isLimited,
                       onChanged: (v) => setDialogState(() => isLimited = v),
                     ),
-                    const SizedBox(height: 15),
 
                     if (canAddPhoto) ...[
                       const Divider(),
@@ -385,8 +394,17 @@ class _TreasuresMapViewState extends State<TreasuresMapView> {
               ),
             ),
             actions: [
-              TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('Cancelar')),
+              TextButton.icon(
+                  style: TextButton.styleFrom(foregroundColor: Colors.grey.shade700),
+                  icon: const Icon(Icons.cancel),
+                  label: const Text('Cancelar'),
+                  onPressed: () => Navigator.pop(ctx)),
               ElevatedButton(
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: const Color(0xFF8992D7),
+                  foregroundColor: Colors.white,
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                ),
                 onPressed: _isUploadingImage ? null : () async {
                   if (formKey.currentState!.validate()) {
                     setDialogState(() => _isUploadingImage = true);
@@ -462,48 +480,62 @@ class _TreasuresMapViewState extends State<TreasuresMapView> {
 
   void _showTreasureDetails(TreasureModel t) {
     showDialog(
-      context: context,
-      builder: (ctx) => AlertDialog(
-        title: Text(t.title),
+        context: context,
+        builder: (ctx) => AlertDialog.adaptive(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+        elevation: 10,
+        titlePadding: EdgeInsets.zero,
+        contentPadding: const EdgeInsets.all(24),
+        actionsPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+        title: Container(
+          padding: const EdgeInsets.all(20),
+          decoration: const BoxDecoration(
+            borderRadius: BorderRadius.only(topLeft: Radius.circular(20), topRight: Radius.circular(20)),
+            gradient: LinearGradient(colors: [Color(0xFF91B1A8), Color(0xFF8992D7)], begin: Alignment.topLeft, end: Alignment.bottomRight),
+          ),
+          child: Text(t.title, style: const TextStyle(fontWeight: FontWeight.bold, color: Colors.white, fontSize: 22)),
+        ),
         content: Column(
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            if (t.imageUrl != null && t.imageUrl!.isNotEmpty)
-              Padding(
-                padding: const EdgeInsets.only(bottom: 10),
-                child: ClipRRect(
-                  borderRadius: BorderRadius.circular(8),
-                  child: Image.network(t.imageUrl!, height: 150, width: double.infinity, fit: BoxFit.cover),
-                ),
-              ),
             Text(t.description),
             const SizedBox(height: 10),
             Row(
               children: [
                 Chip(label: Text('Dificultad: ${t.difficulty}')),
-                const SizedBox(width: 5),
+                const SizedBox(width: 8),
                 if (t.isLimitedTime) const Chip(label: Text('Limitado'), backgroundColor: Colors.orangeAccent),
               ],
             ),
+            if (t.imageUrl != null && t.imageUrl!.isNotEmpty)
+              Padding(
+                padding: const EdgeInsets.only(top: 16),
+                child: ClipRRect(
+                  borderRadius: BorderRadius.circular(12),
+                  child: Image.network(t.imageUrl!, height: 150, width: double.infinity, fit: BoxFit.cover,
+                      errorBuilder: (c, e, s) => const Icon(Icons.broken_image, color: Colors.grey, size: 50)),
+                ),
+              ),
           ],
         ),
         actions: [
-          TextButton(
+          TextButton.icon(
+              icon: const Icon(Icons.edit),
               onPressed: () {
                 Navigator.pop(ctx);
                 _showTreasureForm(context, treasureToEdit: t);
               },
-              child: const Text('Editar')
-          ),
-          ElevatedButton(
-              style: ElevatedButton.styleFrom(backgroundColor: Colors.red),
+              label: const Text('Editar', style: TextStyle(fontWeight: FontWeight.bold)),
+              style: TextButton.styleFrom(foregroundColor: const Color(0xFF8992D7))),
+          TextButton.icon(
+              icon: const Icon(Icons.delete_forever),
+              label: const Text('Eliminar'),
               onPressed: () async {
                 await FirebaseFirestore.instance.collection('treasures').doc(t.id).delete();
                 if(mounted) Navigator.pop(ctx);
               },
-              child: const Text('Eliminar', style: TextStyle(color: Colors.white))
-          ),
+              style: TextButton.styleFrom(foregroundColor: Colors.redAccent)),
         ],
       ),
     );
@@ -511,93 +543,90 @@ class _TreasuresMapViewState extends State<TreasuresMapView> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      bottomNavigationBar: BottomNavigationBar(
-        currentIndex: _showRoutes ? 1 : 0,
-        onTap: (index) {
-          if (index == 1 && _currentPosition == null) {
-            ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Activa el GPS')));
-          }
-          setState(() => _showRoutes = (index == 1));
-        },
-        items: const [
-          BottomNavigationBarItem(icon: Icon(Icons.map), label: 'Explorar'),
-          BottomNavigationBarItem(icon: Icon(Icons.alt_route), label: 'Ruta (200m)'),
-        ],
-      ),
-      floatingActionButton: FloatingActionButton(
-        onPressed: _centerOnUser,
-        child: const Icon(Icons.my_location, color: Colors.blueAccent),
-      ),
-      body: Stack(
-        children: [
-          StreamBuilder<QuerySnapshot>(
-            stream: FirebaseFirestore.instance.collection('treasures').snapshots(),
-            builder: (context, snapshot) {
-              List<Marker> markers = [];
-              List<LatLng> routePoints = [];
+    return SafeArea(
+        top: false,
+      child: Scaffold(
+        resizeToAvoidBottomInset: false,
+        bottomNavigationBar: CurvedNavigationBar(
+          index: _showRoutes ? 1 : 0,
+          height: 60.0,
+          items: const <Widget>[
+            Icon(Icons.map, size: 30, color: Colors.white),
+            Icon(Icons.alt_route, size: 30, color: Colors.white),
+          ],
+          color: const Color(0xFF91B1A8), // Color de fondo de la barra
+          buttonBackgroundColor: const Color(0xFF8992D7), // Color del botón seleccionado
+          backgroundColor: const Color(0xFFE6F2EF), // Color de fondo del Scaffold
+          animationCurve: Curves.easeInOut,
+          animationDuration: const Duration(milliseconds: 400),
+          onTap: (index) {
+            if (index == 1 && _currentPosition == null) {
+              ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+                  content: Text('Activa el GPS para calcular la ruta'),
+                  backgroundColor: Colors.orangeAccent));
+            }
+            setState(() => _showRoutes = (index == 1));
+          },
+        ),
+        floatingActionButton: FloatingActionButton(
+          onPressed: _centerOnUser,
+          child: const Icon(Icons.my_location, color: Colors.blueAccent),
+        ),
+        body: Stack(
+          children: [
+            StreamBuilder<QuerySnapshot>(
+              stream: FirebaseFirestore.instance.collection('treasures').snapshots(),
+              builder: (context, snapshot) {
+                List<Marker> markers = [];
+                List<LatLng> routePoints = [];
 
-              if (snapshot.hasData) {
-                final allTreasures = snapshot.data!.docs.map((d) => TreasureModel.fromMap(d.data() as Map<String, dynamic>, d.id)).toList();
-                markers = allTreasures.map((t) {
+                if (snapshot.hasData) {
+                  final allTreasures = snapshot.data!.docs.map((d) => TreasureModel.fromMap(d.data() as Map<String, dynamic>, d.id)).toList();
 
-                  Color markerColor;
-                  if (t.isLimitedTime) {
-                    markerColor = Colors.amber;
-                  } else {
-                    markerColor = Colors.red;
-                  }
-
-                  return Marker(
+                  markers = allTreasures.map((t) => Marker(
                     point: LatLng(t.location.latitude, t.location.longitude),
                     width: 60,
                     height: 60,
                     child: GestureDetector(
                       onTap: () => _showTreasureDetails(t),
-                      child: Icon(
-                        Icons.location_on,
-                        color: markerColor,
-                        size: 50,
-                      ),
+                      child: const Icon(Icons.location_on, color: Colors.red, size: 50),
                     ),
-                  );
-                }).toList();
+                  )).toList();
 
-                if (_showRoutes && _currentPosition != null) {
-                  routePoints = _calculateOptimizedRoute(allTreasures);
+                  if (_showRoutes && _currentPosition != null) {
+                    routePoints = _calculateOptimizedRoute(allTreasures);
+                  }
                 }
-              }
 
-              if (_currentPosition != null) {
+                if (_currentPosition != null) {
+                  markers.add(Marker(point: _currentPosition!, width: 50, height: 50, child: const Icon(Icons.person_pin_circle, color: Colors.blue, size: 40)));
+                }
 
-                markers.add(Marker(point: _currentPosition!, width: 50, height: 50, child: const Icon(Icons.person_pin_circle, color: Colors.blue, size: 40)));
-
-              }
-
-              return FlutterMap(
-                mapController: _mapController,
-                options: MapOptions(initialCenter: _tepicCenter, initialZoom: 14, onTap: (_, p) => _showTreasureForm(context, location: p)),
-                children: [
-                  TileLayer(urlTemplate: 'https://tile.openstreetmap.org/{z}/{x}/{y}.png', userAgentPackageName: 'com.geohunt.app'),
-                  if (_showRoutes && _currentPosition != null)
-                    CircleLayer(circles: [CircleMarker(point: _currentPosition!, radius: 200, useRadiusInMeter: true, color: Colors.blue.withOpacity(0.1), borderColor: Colors.blue, borderStrokeWidth: 1)]),
-                  if (routePoints.isNotEmpty)
-                    PolylineLayer(polylines: [Polyline(points: routePoints, strokeWidth: 5, color: Colors.deepPurpleAccent, isDotted: true)]),
-                  MarkerLayer(markers: markers),
-                ],
-              );
-            },
-          ),
-          if (_showRoutes)
-            Positioned(top: 10, right: 10, child: Container(padding: const EdgeInsets.all(8), color: Colors.white70, child: const Text("Modo Ruta Activo", style: TextStyle(color: Colors.purple, fontWeight: FontWeight.bold)))),
-        ],
+                return FlutterMap(
+                  mapController: _mapController,
+                  options: MapOptions(initialCenter: _tepicCenter, initialZoom: 14, onTap: (_, p) => _showTreasureForm(context, location: p)),
+                  children: [
+                    TileLayer(urlTemplate: 'https://tile.openstreetmap.org/{z}/{x}/{y}.png', userAgentPackageName: 'com.geohunt.app'),
+                    if (_showRoutes && _currentPosition != null)
+                      CircleLayer(circles: [CircleMarker(point: _currentPosition!, radius: 200, useRadiusInMeter: true, color: Colors.blue.withOpacity(0.1), borderColor: Colors.blue, borderStrokeWidth: 1)]),
+                    if (routePoints.isNotEmpty)
+                      PolylineLayer(polylines: [Polyline(points: routePoints, strokeWidth: 5, color: Colors.deepPurpleAccent, isDotted: true)]),
+                    MarkerLayer(markers: markers),
+                  ],
+                );
+              },
+            ),
+            if (_showRoutes)
+              Positioned(top: 10, right: 10, child: Container(padding: const EdgeInsets.all(8), color: Colors.white70, child: const Text("Modo Ruta Activo", style: TextStyle(color: Colors.purple, fontWeight: FontWeight.bold)))),
+          ],
+        ),
       ),
     );
   }
 }
 
 // =============================================================================
-// 2. VISTA DE LISTA DE TESOROS (CON FOTO)
+// 2. VISTA DE LISTA DE TESOROS CON FOTO
 // =============================================================================
 class TreasuresListView extends StatelessWidget {
   const TreasuresListView({super.key});
@@ -646,19 +675,39 @@ class UsersListView extends StatelessWidget {
 
   void _showUserDetails(BuildContext context, UserModel user) {
     showDialog(
-      context: context,
-      builder: (ctx) => AlertDialog(
-        title: Row(children: [
-          CircleAvatar(backgroundImage: user.profileImageUrl != null ? NetworkImage(user.profileImageUrl!) : null, child: user.profileImageUrl == null ? const Icon(Icons.person) : null),
-          const SizedBox(width: 10), Expanded(child: Text(user.username))
-        ]),
-        content: Column(mainAxisSize: MainAxisSize.min, crossAxisAlignment: CrossAxisAlignment.start, children: [
-          Text('Email: ${user.email}'),
-          Text('Tel: ${user.phoneNumber ?? "N/A"}'),
-          Text('Puntaje: ${user.score}'),
-          Text('Tesoros Hallados: ${user.foundTreasures?.length ?? 0}'),
-        ]),
-        actions: [TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('Cerrar'))],
+        context: context,
+        builder: (ctx) => AlertDialog.adaptive(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+        elevation: 10,
+        titlePadding: EdgeInsets.zero,
+        contentPadding: const EdgeInsets.fromLTRB(24, 20, 24, 24),
+        actionsPadding: const EdgeInsets.only(right: 16, bottom: 8),
+        title: Container(
+            padding: const EdgeInsets.all(20),
+            decoration: const BoxDecoration(
+              borderRadius: BorderRadius.only(topLeft: Radius.circular(20), topRight: Radius.circular(20)),
+              gradient: LinearGradient(colors: [Color(0xFF91B1A8), Color(0xFF8992D7)], begin: Alignment.topLeft, end: Alignment.bottomRight),
+            ),
+            child: Row(children: [
+              CircleAvatar(
+                  radius: 24,
+                  backgroundColor: Colors.white12,
+                  backgroundImage: user.profileImageUrl != null ? NetworkImage(user.profileImageUrl!) : null,
+                  child: user.profileImageUrl == null ? const Icon(Icons.person, color: Color(0xFF91B1A8), size: 30) : null),
+              const SizedBox(width: 12),
+              Expanded(child: Text(user.username, style: const TextStyle(fontWeight: FontWeight.bold, color: Colors.white, fontSize: 22)))
+            ])),
+        content: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              ListTile(leading: const Icon(Icons.email_outlined, color: Color(0xFF8992D7)), title: const Text('Email'), subtitle: Text(user.email ?? 'No disponible'), dense: true),
+              ListTile(leading: const Icon(Icons.phone_outlined, color: Color(0xFF8992D7)), title: const Text('Teléfono'), subtitle: Text(user.phoneNumber ?? "No especificado"), dense: true),
+              const Divider(height: 25, thickness: 1),
+              ListTile(leading: const Icon(Icons.star_border, color: Colors.amber), title: const Text('Puntaje'), subtitle: Text('${user.score} pts', style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16)), dense: true),
+              ListTile(leading: const Icon(Icons.diamond_outlined, color: Colors.teal), title: const Text('Tesoros Hallados'), subtitle: Text('${user.foundTreasures?.length ?? 0}'), dense: true),
+            ]),
+        actions: [TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('CERRAR', style: TextStyle(fontWeight: FontWeight.bold, color: Color(0xFF8992D7))))],
       ),
     );
   }
@@ -710,7 +759,7 @@ class UsersListView extends StatelessWidget {
 }
 
 // =============================================================================
-// 4. VISTA DE PERFIL ADMIN (OPTIMIZADA)
+// 4. VISTA DE PERFIL ADMIN
 // =============================================================================
 class ProfileEditView extends StatefulWidget {
   final AdminModel adminUser;
@@ -766,7 +815,6 @@ class _ProfileEditViewState extends State<ProfileEditView> {
     }
   }
 
-  // OPTIMIZACIÓN: Perfil ligero (512px, 60%)
   Future<void> _pickAndUploadImage(ImageSource source) async {
     final ImagePicker picker = ImagePicker();
     try {

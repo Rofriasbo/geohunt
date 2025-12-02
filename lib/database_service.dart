@@ -18,30 +18,27 @@ class DatabaseService {
     try {
       await _db.collection(_userCollection).doc(uid).update(data);
     } catch (e) {
-      print('Error al actualizar usuario $uid: $e');
     }
   }
 
   Future<void> saveFCMToken(String uid, String? token) async {
     if (token != null) {
       await _db.collection(_userCollection).doc(uid).set({
-        'fcmToken': token, // Este es el campo que la Cloud Function utiliza
+        'fcmToken': token,
       }, SetOptions(merge: true));
-      print("Token FCM guardado/actualizado en Firestore para UID: $uid");
     }
   }
 
-  // Método específico para crear/actualizar Admins
+  // Metodo para crear/actualizar Admins
   Future<void> createOrUpdateAdmin(AdminModel admin) async {
     await _db.collection(_userCollection).doc(admin.uid).set(admin.toJson(), SetOptions(merge: true));
   }
 
-  // Método genérico para obtener datos crudos y decidir el modelo después
+  // Metodo para obtener datos y decidir el modelo después
   Future<DocumentSnapshot?> getUserSnapshot(String uid) async {
     try {
       return await _db.collection(_userCollection).doc(uid).get();
     } catch (e) {
-      print('Error al obtener snapshot: $e');
       return null;
     }
   }
@@ -53,7 +50,6 @@ class DatabaseService {
       await docRef.set(treasure.toJson());
       return docRef.id;
     } catch (e) {
-      print('Error: $e');
       return null;
     }
   }

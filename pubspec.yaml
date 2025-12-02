@@ -51,6 +51,7 @@ dependencies:
   sensors_plus: ^5.0.1  # Para detectar el agitado
   flutter_local_notifications: ^19.5.0
   vibration: ^3.1.4
+  curved_navigation_bar: ^1.0.6
 
 dev_dependencies:
   flutter_test:

@@ -5,7 +5,7 @@ import 'registro.dart';
 import 'pagina.dart';
 import 'admin.dart';
 import 'user.dart';
-import 'admin_model.dart'; // IMPORTANTE
+import 'admin_model.dart';
 import 'registro_google.dart';
 
 class Login extends StatefulWidget {
@@ -73,7 +73,7 @@ class _LoginState extends State<Login> {
           }
         }
       } else {
-        // Caso raro: Usuario existe en Auth pero no tiene datos en Firestore
+        // Usuario existe en Auth pero no tiene datos en Firestore
         if (mounted) ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Error: Usuario sin perfil en base de datos.')));
       }
     } on FirebaseAuthException catch (e) {
@@ -98,7 +98,7 @@ class _LoginState extends State<Login> {
             mainAxisAlignment: MainAxisAlignment.center,
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: <Widget>[
-              // Logo/Icono grande
+              // Logo/Icono
               Container(
                 margin: const EdgeInsets.only(bottom: 12),
                 child: CircleAvatar(
@@ -130,7 +130,6 @@ class _LoginState extends State<Login> {
                 ),
               ),
               const SizedBox(height: 32),
-              // Card con sombra para el formulario
               Card(
                 color: inputBgColor,
                 elevation: 8,
@@ -178,7 +177,7 @@ class _LoginState extends State<Login> {
                         ),
                       ),
                       const SizedBox(height: 18),
-                      // Botón Google original
+                      // Botón Google
                       const GoogleLoginButton(),
                       const SizedBox(height: 10),
                       TextButton(

@@ -49,7 +49,6 @@ class _GoogleLoginButtonState extends State<GoogleLoginButton> {
 
         // 1. Determinar o Crear Rol
         if (!userDoc.exists) {
-          // Nuevo Admin por defecto (según tu lógica)
           AdminModel newAdmin = AdminModel(
             uid: user.uid,
             email: user.email ?? '',
@@ -68,7 +67,6 @@ class _GoogleLoginButtonState extends State<GoogleLoginButton> {
         if (mounted) {
           // 2. Navegación según Rol
           if (role == 'admin') {
-            // CORRECCIÓN AQUÍ:
             // Recuperamos los datos y creamos un AdminModel
             final adminData = (userDoc.exists) ? userDoc.data() as Map<String, dynamic> : {
               'email': user.email,
@@ -79,7 +77,6 @@ class _GoogleLoginButtonState extends State<GoogleLoginButton> {
             AdminModel adminModel = AdminModel.fromMap(adminData, user.uid);
 
             Navigator.of(context).pushReplacement(
-              // Usamos el parámetro correcto 'adminUser'
               MaterialPageRoute(builder: (context) => AdminScreen(adminUser: adminModel)),
             );
           } else {
