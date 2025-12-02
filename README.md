@@ -84,8 +84,8 @@ Arquitectura escalable basada en **Flutter** y servicios en la nube.
 ## 🚨 Sistema de notificaciones locales y push
 - Cuando un usuario se encuentra a cinco metros de un tesoro sin reclamar, automáticamente le llega una notificación
   indicando que realice el gesto de "agitar" (shake) el celular, para así, obtener su recompensa.
-- Al crearse un punto que se encuentra a un rango de 100 metros del usuario, llegará una notificación para que
-  vaya a reclamar dicho punto mientras está disponible.
+- Al crearse un punto que se encuentra a un rango de 500 metros del usuario, llegará una notificación para que
+  vaya a reclamar dicho punto mientras está disponible (sucede cuando el usuario ya había iniciado sesión en el dispositivo previamente).
 
 ## ⚙️ Requisitos e Instalación
 
