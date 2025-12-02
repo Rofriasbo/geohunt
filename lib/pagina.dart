@@ -1288,12 +1288,15 @@ class _UserProfileViewState extends State<UserProfileView> {
                           color: Colors.orange.shade50,
                           borderRadius: BorderRadius.circular(8),
                         ),
-                        child: const Text(
-                          "Editando...",
-                          style: TextStyle(
-                            color: Colors.orange,
-                            fontSize: 12,
-                            fontWeight: FontWeight.bold,
+                        child: const FittedBox(
+                          fit: BoxFit.scaleDown,
+                          child: Text(
+                            "Editando...",
+                            style: TextStyle(
+                              color: Colors.orange,
+                              fontSize: 12,
+                              fontWeight: FontWeight.bold,
+                            ),
                           ),
                         ),
                       ),
