@@ -5,7 +5,7 @@ import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 final FlutterLocalNotificationsPlugin plugin = FlutterLocalNotificationsPlugin();
 
 Future iniciarNotificaciones() async {
-  const AndroidInitializationSettings AIS = AndroidInitializationSettings('@mipmap/ic_launcher'); // Usa @mipmap para asegurar que lo encuentre
+  const AndroidInitializationSettings AIS = AndroidInitializationSettings('@mipmap/ic_launcher');
 
   const InitializationSettings IS = InitializationSettings(
       android: AIS
@@ -20,7 +20,7 @@ Future iniciarNotificaciones() async {
     await androidImplementation.requestNotificationsPermission();
 
     const AndroidNotificationChannel channel = AndroidNotificationChannel(
-      'treasure_alerts', // ID (Igual al Backend)
+      'treasure_alerts', // ID
       'Alertas de Tesoros', // Nombre
       description: 'Notificaciones cuando aparece un tesoro cerca',
       importance: Importance.max,
@@ -42,22 +42,20 @@ Future iniciarNotificaciones() async {
     }
 
     final AndroidNotificationDetails AND = AndroidNotificationDetails(
-    'treasure_alerts', // <--- 1. ASEGURA QUE ESTO COINCIDA CON EL MANIFEST
+    'treasure_alerts',
     'Alertas de Tesoros',
     channelDescription: 'Notificaciones de tesoros cercanos',
     importance: Importance.max,
     priority: Priority.high,
 
     // Configuración visual
-    icon: icono, // Asegúrate de pasar 'tesoro' (sin .png)
-
+    icon: icono,
     // Configuración de Tiempo
     usesChronometer: usarCronometro,
     chronometerCountDown: true,
     when: tiempoObjetivo,
     timeoutAfter: tiempoRestante,
 
-    // --- CORRECCIÓN DEL ERROR DE LED ---
     enableLights: true,
     color: const Color.fromARGB(255, 255, 0, 0),
     ledColor: const Color.fromARGB(255, 255, 0, 0),

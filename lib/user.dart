@@ -7,7 +7,7 @@ class UserModel {
   final int score;
   final List<String>? foundTreasures;
   final String? phoneNumber;
-  final String? profileImageUrl; // NUEVO: Foto de perfil
+  final String? profileImageUrl;
   final String role;
   final String? fcmToken;
   final GeoPoint? lastKnownLocation;
@@ -19,7 +19,7 @@ class UserModel {
     this.score = 0,
     this.foundTreasures,
     this.phoneNumber,
-    this.profileImageUrl, // NUEVO
+    this.profileImageUrl,
     this.role = 'user',
     this.fcmToken,
     this.lastKnownLocation
@@ -37,7 +37,7 @@ class UserModel {
           ? List<String>.from(treasuresList)
           : null,
       phoneNumber: data['phoneNumber'] as String?,
-      profileImageUrl: data['profileImageUrl'] as String?, // Leemos la imagen
+      profileImageUrl: data['profileImageUrl'] as String?,
       role: data['role'] ?? 'user',
       fcmToken: data['fcmToken'] as String?,
       lastKnownLocation: data['lastKnownLocation'] as GeoPoint?,
@@ -51,7 +51,7 @@ class UserModel {
       'score': score,
       'foundTreasures': foundTreasures ?? [],
       'phoneNumber': phoneNumber,
-      'profileImageUrl': profileImageUrl, // Guardamos la imagen
+      'profileImageUrl': profileImageUrl,
       'role': role,
       'fcmToken': fcmToken,
       'lastKnownLocation': lastKnownLocation

@@ -62,7 +62,7 @@ class _AdminScreenState extends State<AdminScreen> {
           // Índice 1: Lista de Tesoros
           const TreasuresListView(),
           // Índice 2: Exploradores
-          const UsersListView(), // <-- AÑADIDO
+          const UsersListView(),
           // Índice 3: Modificar Perfil
           ProfileEditView(adminUser: currentAdmin),
           // Índice 4: Manual de Usuario
@@ -172,7 +172,7 @@ class _AdminScreenState extends State<AdminScreen> {
 }
 
 // ---------------------------------------------------------------------------
-// VISTA 1: MAPA DE TESOROS (CRUD + FOTO OPTIMIZADA)
+// VISTA 1: MAPA DE TESOROS
 // ---------------------------------------------------------------------------
 class TreasuresMapView extends StatefulWidget {
   final String adminUid;
@@ -257,10 +257,9 @@ class _TreasuresMapViewState extends State<TreasuresMapView> {
     return path;
   }
 
-  // --- LÓGICA DE IMAGEN DEL TESORO (OPTIMIZADA) ---
+  // --- LÓGICA DE IMAGEN DEL TESORO ---
   Future<void> _pickTreasureImage(StateSetter setDialogState) async {
     final ImagePicker picker = ImagePicker();
-    // OPTIMIZACIÓN: Max 1024px y Calidad 70% (Balance detalle/peso)
     final XFile? image = await picker.pickImage(
         source: ImageSource.gallery,
         imageQuality: 70,
@@ -312,7 +311,7 @@ class _TreasuresMapViewState extends State<TreasuresMapView> {
 
           return AlertDialog.adaptive(
             shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-            backgroundColor: const Color(0xFFF2F5F4), // Añade un color de fondo sólido
+            backgroundColor: const Color(0xFFF2F5F4),
             elevation: 10,
             titlePadding: EdgeInsets.zero,
             contentPadding: const EdgeInsets.fromLTRB(24, 20, 24, 0),
@@ -343,7 +342,7 @@ class _TreasuresMapViewState extends State<TreasuresMapView> {
                       maxLines: 2,
                     ),
                     DropdownButtonFormField<String>(
-                      value: difficulty,
+                      initialValue: difficulty,
                       decoration: const InputDecoration(labelText: 'Dificultad'),
                       items: ['Fácil', 'Medio', 'Difícil'].map((e) => DropdownMenuItem(value: e, child: Text(e))).toList(),
                       onChanged: (v) => setDialogState(() {
@@ -627,7 +626,7 @@ class _TreasuresMapViewState extends State<TreasuresMapView> {
 }
 
 // =============================================================================
-// 2. VISTA DE LISTA DE TESOROS (CON FOTO)
+// 2. VISTA DE LISTA DE TESOROS CON FOTO
 // =============================================================================
 class TreasuresListView extends StatelessWidget {
   const TreasuresListView({super.key});
@@ -760,7 +759,7 @@ class UsersListView extends StatelessWidget {
 }
 
 // =============================================================================
-// 4. VISTA DE PERFIL ADMIN (OPTIMIZADA)
+// 4. VISTA DE PERFIL ADMIN
 // =============================================================================
 class ProfileEditView extends StatefulWidget {
   final AdminModel adminUser;
@@ -816,7 +815,6 @@ class _ProfileEditViewState extends State<ProfileEditView> {
     }
   }
 
-  // OPTIMIZACIÓN: Perfil ligero (512px, 60%)
   Future<void> _pickAndUploadImage(ImageSource source) async {
     final ImagePicker picker = ImagePicker();
     try {

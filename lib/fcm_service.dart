@@ -1,9 +1,7 @@
-// lib/fcm_service.dart
 
 import 'package:firebase_messaging/firebase_messaging.dart';
-import 'package:firebase_auth/firebase_auth.dart';
 import 'package:geohunt/notificaciones.dart';
-import 'database_service.dart'; // Asegúrate de que esta ruta sea correcta para DatabaseService
+import 'database_service.dart';
 
 class FCMService {
   // Instancia de Firebase Messaging y DatabaseService
@@ -35,7 +33,7 @@ class FCMService {
         // 3. Guardar el token en Firestore
         await _dbService.saveFCMToken(uid, token);
 
-        // 4. Escuchar si el token se actualiza (por ejemplo, si Firebase lo rota)
+        // 4. Escuchar si el token se actualiza
         _fcm.onTokenRefresh.listen((newToken) {
           _dbService.saveFCMToken(uid, newToken);
         });

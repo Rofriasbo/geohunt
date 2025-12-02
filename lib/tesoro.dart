@@ -9,11 +9,10 @@ class TreasureModel {
   final String creatorUid;
   final bool isLimitedTime;
   final DateTime? limitedUntil;
-  final bool notificationSent; //Adición para manejar los puntos temporales
+  final bool notificationSent; // Manejo de puntos temporales
   final Timestamp? creationDate;
   final Timestamp? expiryDate;
-  final String? imageUrl; // NUEVO: URL de la imagen del tesoro
-
+  final String? imageUrl;
   TreasureModel({
     required this.id,
     required this.title,
@@ -26,7 +25,7 @@ class TreasureModel {
     this.notificationSent = false,
     this.creationDate,
     this.expiryDate,
-    this.imageUrl, // NUEVO
+    this.imageUrl,
   });
 
   factory TreasureModel.fromMap(Map<String, dynamic> data, String documentId) {
@@ -46,7 +45,7 @@ class TreasureModel {
       notificationSent: data['notificationSent'] ?? false,
       creationDate: data['creationDate'] as Timestamp?,
       expiryDate: data['expiryDate'] as Timestamp?,
-      imageUrl: data['imageUrl'] as String?, // NUEVO
+      imageUrl: data['imageUrl'] as String?,
     );
   }
 
@@ -62,7 +61,7 @@ class TreasureModel {
       'notificationSent': notificationSent,
       'creationDate': creationDate ?? Timestamp.now(),
       'expiryDate': expiryDate,
-      'imageUrl': imageUrl, // NUEVO
+      'imageUrl': imageUrl,
     };
   }
 }

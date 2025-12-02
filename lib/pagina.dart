@@ -1,16 +1,15 @@
 import 'dart:async';
 import 'dart:io';
-import 'dart:math'; // Para Shake
+import 'dart:math';
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_storage/firebase_storage.dart';
 import 'package:image_picker/image_picker.dart';
-import 'package:permission_handler/permission_handler.dart';
 import 'package:flutter_map/flutter_map.dart';
 import 'package:latlong2/latlong.dart';
 import 'package:geolocator/geolocator.dart';
-import 'package:sensors_plus/sensors_plus.dart'; // Sensores
+import 'package:sensors_plus/sensors_plus.dart';
 import 'package:vibration/vibration.dart';
 import 'database_service.dart';
 import 'fcm_service.dart';
@@ -78,9 +77,9 @@ class _WelcomeScreenState extends State<WelcomeScreen> {
       mostrarNotificacion(titulo, cuerpo, 'tesoro', fechaLimite: fechaLimite);
     });
 
-    FirebaseMessaging.onMessageOpenedApp.listen((RemoteMessage message) {
+    FirebaseMessaging.onMessageOpenedApp.listen((RemoteMessage message) { // lógica para navegar al mapa y centrar el tesoro
       print('Usuario tocó la notificación');
-      // lógica para navegar al mapa y centrar el tesoro
+
     });
 
     FirebaseMessaging.instance.getInitialMessage().then((
@@ -188,8 +187,7 @@ class _WelcomeScreenState extends State<WelcomeScreen> {
                   key: _bottomNavigationKey,
                   index: _selectedIndex,
                   backgroundColor: Colors.transparent, //COLOR DE FONDO
-                  buttonBackgroundColor:
-                      secondaryColor, //COLOR CIRCULAR DEL ICONO
+                  buttonBackgroundColor: secondaryColor, //COLOR CIRCULAR DEL ICONO
                   color: secondaryColor, //COLOR DE LA BARRA
                   animationCurve: Curves.easeInOut,
                   animationDuration: Duration(milliseconds: 400),
@@ -231,7 +229,7 @@ class _WelcomeScreenState extends State<WelcomeScreen> {
 }
 
 // ---------------------------------------------------------------------------
-// VISTA 1: MAPA DEL USUARIO (Visualización de Tesoros + Fotos)
+// VISTA 1: MAPA DEL USUARIO Visualización de Tesoros
 // ---------------------------------------------------------------------------
 class UserMapView extends StatefulWidget {
   final UserModel user;
@@ -254,7 +252,7 @@ class _UserMapViewState extends State<UserMapView> {
   StreamSubscription? _accelerometerSubscription;
   StreamSubscription<QuerySnapshot>?
   _treasuresSubscription; // Para escuchar los tesoros
-  List<TreasureModel> _allTreasures = []; // Guardamos los tesoros aquí
+  List<TreasureModel> _allTreasures = []; // Guardamos los tesoros
   TreasureModel? _treasureInRange;
   bool _isClaiming = false;
 
@@ -295,7 +293,7 @@ class _UserMapViewState extends State<UserMapView> {
 
   // --- 1. SENSOR SHAKE ---
   void _initSensor() {
-    _accelerometerSubscription = userAccelerometerEvents.listen((
+    _accelerometerSubscription = userAccelerometerEventStream().listen((
       UserAccelerometerEvent event,
     ) {
       double acceleration = sqrt(
@@ -425,7 +423,7 @@ class _UserMapViewState extends State<UserMapView> {
       if (mounted) {
         setState(() {
           _isClaiming = false;
-          _treasureInRange = null; // Ocultar botón
+          _treasureInRange = null;
         });
       }
     }
@@ -521,7 +519,7 @@ class _UserMapViewState extends State<UserMapView> {
   void _saveLastKnownLocation(Position position) {
     // 1. Convertir la posición de Geolocator a un GeoPoint de Firestore
     final GeoPoint geoPoint = GeoPoint(position.latitude, position.longitude);
-    // 2. Usar el nuevo metodo updateUser para actualizar SOLO este campo
+    // 2. Metodo updateUser para actualizar solo este campo
     _dbService.updateUser(
       widget.user.uid,
       // Solo actualiza 'lastKnownLocation'
@@ -645,10 +643,8 @@ class _UserMapViewState extends State<UserMapView> {
       bool canVibrate = await Vibration.hasVibrator() ?? false;
 
       if (canVibrate) {
-        // 2. Patrón de vibración: Vibra por 500ms y luego pausa 200ms (un pulso rápido)
+        // 2. Patrón de vibración: Vibra por 500ms y luego pausa 200ms
         Vibration.vibrate(duration: 500);
-        // Si quieres un patrón de pulsos:
-        // Vibration.vibrate(pattern: [0, 500, 200, 500]); // Pausa, Vibra, Pausa, Vibra
       }
     } catch (e) {
       print('Error al intentar vibrar: $e');
@@ -824,7 +820,6 @@ class LeaderboardView extends StatelessWidget {
     if (index == 1) return Text("🥈", style: TextStyle(fontSize: 24));
     if (index == 2) return Text("🥉", style: TextStyle(fontSize: 24));
 
-    // Para el puesto 4 en adelante, un círculo gris con el número
     return Container(
       width: 24,
       height: 24,
@@ -913,11 +908,11 @@ class LeaderboardView extends StatelessWidget {
                             ? const BorderSide(
                                 color: Colors.purple,
                                 width: 3,
-                              ) // Borde más grueso si es el usuario logueado
-                            : BorderSide.none, // Sin borde para los demás
+                              )
+                            : BorderSide.none,
                       ),
                       child: ListTile(
-                        // SECCIÓN IZQUIERDA: PUESTO + AVATAR
+                        // SECCIÓN IZQUIERDA: PUESTO y AVATAR
                         leading: SizedBox(
                           width: 80,
                           child: Row(
@@ -926,16 +921,16 @@ class LeaderboardView extends StatelessWidget {
                               // 1. El Widget del Puesto (Medalla o Número)
                               getRankWidget(index),
 
-                              // 2. El Avatar con Borde de Color
+                              // 2. Avatar con Borde de Color
                               Container(
                                 padding: const EdgeInsets.all(
                                   2,
-                                ), // Grosor del borde
+                                ),
                                 decoration: BoxDecoration(
                                   shape: BoxShape.circle,
                                   color: index < 3
                                       ? getRankColor(index, userLogged)
-                                      : Colors.transparent, // Color del borde
+                                      : Colors.transparent,
                                 ),
                                 child: CircleAvatar(
                                   radius: 20,
@@ -968,7 +963,7 @@ class LeaderboardView extends StatelessWidget {
                                 : FontWeight.w600,
                             fontSize: index < 3
                                 ? 18
-                                : 16, // Más grande para top 3
+                                : 16,
                             color: const Color(0xFF333333),
                           ),
                         ),
@@ -980,7 +975,6 @@ class LeaderboardView extends StatelessWidget {
                             vertical: 6,
                           ),
                           decoration: BoxDecoration(
-                            // Si es Top 3, usa el color de su medalla, si no, el color secundario por defecto
                             color: index < 3
                                 ? getRankColor(index, userLogged)
                                 : Color(0xFF8992D7),
@@ -1008,7 +1002,7 @@ class LeaderboardView extends StatelessWidget {
 }
 
 // ---------------------------------------------------------------------------
-// VISTA 3: PERFIL DE USUARIO (OPTIMIZADO)
+// VISTA 3: PERFIL DE USUARIO
 // ---------------------------------------------------------------------------
 class UserProfileView extends StatefulWidget {
   final UserModel user;
@@ -1105,13 +1099,13 @@ class _UserProfileViewState extends State<UserProfileView> {
 
   @override
   Widget build(BuildContext context) {
-    // Usamos un SingleChildScrollView con bouncing physics para sensación nativa
+
     return SingleChildScrollView(
       physics: const BouncingScrollPhysics(),
       child: Column(
         children: [
           // ---------------------------------------------
-          // 1. CABECERA DE PERFIL (Tarjeta Superior)
+          // 1. CABECERA DE PERFIL
           // ---------------------------------------------
           Container(
             width: double.infinity,
@@ -1132,7 +1126,7 @@ class _UserProfileViewState extends State<UserProfileView> {
             ),
             child: Column(
               children: [
-                // AVATAR CON BORDE Y BADGE DE CAMARA
+                // AVATAR
                 Stack(
                   children: [
                     Container(
@@ -1326,7 +1320,7 @@ class _UserProfileViewState extends State<UserProfileView> {
                 // BOTÓN EDITAR
                 Row(
                   children: [
-                    // Botón Principal (Editar o Guardar)
+
                     Expanded(
                       child: SizedBox(
                         height: 55,
@@ -1335,7 +1329,7 @@ class _UserProfileViewState extends State<UserProfileView> {
                           style: ElevatedButton.styleFrom(
                             backgroundColor: _isEditing
                                 ? accentColor
-                                : secondaryColor, // Verde si guarda, Morado si edita
+                                : secondaryColor,
                             foregroundColor: Colors.white,
                             elevation: 5,
                             shape: RoundedRectangleBorder(
@@ -1356,7 +1350,7 @@ class _UserProfileViewState extends State<UserProfileView> {
                       ),
                     ),
 
-                    // Botón Cancelar (Solo visible si editamos)
+                    // Botón Cancelar
                     if (_isEditing) ...[
                       const SizedBox(width: 15),
                       InkWell(
@@ -1481,8 +1475,7 @@ class _UserProfileViewState extends State<UserProfileView> {
     if (score == null || score <= 0) return 0;
 
     const double base = 1000.0; // Puntos para el nivel 1
-    const double multiplicador =
-        1.5; // Incremento de puntos rqueridos por nivel
+    const double multiplicador = 1.5; // Incremento de puntos rqueridos por nivel
 
     if (score < base) return 0;
 
