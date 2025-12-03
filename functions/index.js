@@ -26,7 +26,7 @@ exports.notifyNearbyUsersOnTreasureCreation = functions.firestore
     // --- 2. PREPARAR DATOS COMUNES ---
     const usersSnapshot = await db.collection("users").get();
     const notifications = [];
-    const RADIO_BUSQUEDA = 500; // Radio amplio
+    const RADIO_BUSQUEDA = 100; // Radio amplio
 
     // --- 3. LOGICA DE DISTINCIÓN (NUEVO) ---
     const isLimited = treasure.isLimitedTime === true;
